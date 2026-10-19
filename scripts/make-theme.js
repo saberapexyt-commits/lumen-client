@@ -70,18 +70,19 @@ const drawing = `
     // crop to the visible artwork so the logo fills its slot instead of floating in padding
     let x0 = t.width, y0 = t.height, x1 = 0, y1 = 0;
     for (let y = 0; y < t.height; y++) for (let x = 0; x < t.width; x++) if (p[(y * t.width + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    const pad = 48; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(t.width - 1, x1 + pad); y1 = Math.min(t.height - 1, y1 + pad);
+    const pad = 28; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(t.width - 1, x1 + pad); y1 = Math.min(t.height - 1, y1 + pad);
     const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
     const g = logoC.getContext('2d'); g.imageSmoothingQuality = 'high';
-    const k = Math.min(1990 / cw, 470 / ch); const w = cw * k, h = ch * k;
-    g.drawImage(t, x0, y0, cw, ch, (2048 - w) / 2, (512 - h) / 2 - 10, w, h);
+    const VISIBLE = 512 * (44 / 64); // rows the title screen actually draws
+    const k = Math.min(1990 / cw, (VISIBLE - 8) / ch); const w = cw * k, h = ch * k;
+    g.drawImage(t, x0, y0, cw, ch, (2048 - w) / 2, (VISIBLE - h) / 2, w, h);
   }
   png('minecraft', logoC);
   png('minceraft', logoC);
   { const c = mk(1024, 128); const g = c.getContext('2d');
-    g.font = '700 60px "Segoe UI", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.letterSpacing = '16px'; g.fillStyle = '#9fdcff'; g.shadowColor = 'rgba(61,184,255,0.8)'; g.shadowBlur = 20;
-    g.fillText('JAVA EDITION', 512, 68); png('edition', c); }
+    g.font = '700 50px "Segoe UI", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.letterSpacing = '14px'; g.fillStyle = '#9fdcff'; g.shadowColor = 'rgba(61,184,255,0.8)'; g.shadowBlur = 20;
+    g.fillText('JAVA EDITION', 668, 62); png('edition', c); }
 
   /* ---- buttons (200x20 nine-slice, 3px border) ---- */
   const btn = (fill, edge, bottom, hi) => { const c = mk(200, 20); const g = c.getContext('2d');
