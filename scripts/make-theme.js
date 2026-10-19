@@ -56,6 +56,9 @@ const drawing = `
   };
   // The wide logo sits on a flat navy background: derive alpha from distance to that colour and
   // un-premultiply, so glows keep their colour instead of turning into a grey halo.
+  // The title screen draws only the top 44 of 64 rows of this texture, so everything stays inside that band.
+  // Emblem and wordmark are scaled independently (each keeps its own proportions) so LUMEN can be large.
+  let wordCenterX = 1300;
   const logoC = mk(2048, 512); {
     const t = mk(wide.width, wide.height); const tg = t.getContext('2d'); tg.drawImage(wide, 0, 0);
     const d = tg.getImageData(0, 0, t.width, t.height); const p = d.data;
@@ -67,22 +70,36 @@ const drawing = `
       p[i + 3] = Math.round(a * 255);
     }
     tg.putImageData(d, 0, 0);
-    // crop to the visible artwork so the logo fills its slot instead of floating in padding
-    let x0 = t.width, y0 = t.height, x1 = 0, y1 = 0;
-    for (let y = 0; y < t.height; y++) for (let x = 0; x < t.width; x++) if (p[(y * t.width + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    const pad = 28; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(t.width - 1, x1 + pad); y1 = Math.min(t.height - 1, y1 + pad);
-    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    const W = t.width, H = t.height, A = (x, y) => p[(y * W + x) * 4 + 3];
+    const colMax = (x) => { let m = 0; for (let y = 0; y < H; y++) m = Math.max(m, A(x, y)); return m; };
+    // find the gap between emblem and wordmark: first run of 6 empty columns after the emblem started
+    let started = false, split = -1;
+    for (let x = 0; x < W - 6 && split < 0; x++) {
+      if (colMax(x) > 40) started = true;
+      if (started && x > 150) { let empty = true; for (let k = 0; k < 6; k++) if (colMax(x + k) > 14) empty = false; if (empty) split = x + 3; }
+    }
+    if (split < 0) split = Math.round(W * 0.36);
+    const box = (x0, x1) => { let a0 = H, a1 = 0, b0 = x1, b1 = x0; for (let y = 0; y < H; y++) for (let x = x0; x < x1; x++) if (A(x, y) > 8) { if (y < a0) a0 = y; if (y > a1) a1 = y; if (x < b0) b0 = x; if (x > b1) b1 = x; } const pd = 18; return { x: Math.max(x0, b0 - pd), y: Math.max(0, a0 - pd), w: Math.min(x1, b1 + pd) - Math.max(x0, b0 - pd), h: Math.min(H - 1, a1 + pd) - Math.max(0, a0 - pd) }; };
+    const em = box(0, split), wd = box(split, W);
+    const VIS = 512 * (44 / 64); // rows the title screen actually draws (352)
+    const ke = (VIS - 6) / em.h;                 // emblem fills the band
+    const kw = Math.min(ke * 1.02, (VIS - 6) / wd.h * 0.94); // wordmark: as tall as the emblem allows
+    const gap = 8;
+    let ew = em.w * ke, ww = wd.w * kw;
+    let shrink = Math.min(1, 1990 / (ew + gap + ww)); // never exceed the texture width
+    const ke2 = ke * shrink, kw2 = kw * shrink; ew *= shrink; ww *= shrink;
+    const total = ew + gap + ww, x0 = (2048 - total) / 2;
     const g = logoC.getContext('2d'); g.imageSmoothingQuality = 'high';
-    const VISIBLE = 512 * (44 / 64); // rows the title screen actually draws
-    const k = Math.min(1990 / cw, (VISIBLE - 8) / ch); const w = cw * k, h = ch * k;
-    g.drawImage(t, x0, y0, cw, ch, (2048 - w) / 2, (VISIBLE - h) / 2, w, h);
+    g.drawImage(t, em.x, em.y, em.w, em.h, x0, (VIS - em.h * ke2) / 2, ew, em.h * ke2);
+    g.drawImage(t, wd.x, wd.y, wd.w, wd.h, x0 + ew + gap, (VIS - wd.h * kw2) / 2 - 4, ww, wd.h * kw2);
+    wordCenterX = x0 + ew + gap + ww / 2;
   }
   png('minecraft', logoC);
   png('minceraft', logoC);
   { const c = mk(1024, 128); const g = c.getContext('2d');
     g.font = '700 50px "Segoe UI", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.letterSpacing = '14px'; g.fillStyle = '#9fdcff'; g.shadowColor = 'rgba(61,184,255,0.8)'; g.shadowBlur = 20;
-    g.fillText('JAVA EDITION', 668, 62); png('edition', c); }
+    g.fillText('JAVA EDITION', Math.max(330, Math.min(744, wordCenterX - 556)), 24); png('edition', c); }
 
   /* ---- buttons (200x20 nine-slice, 3px border) ---- */
   const btn = (fill, edge, bottom, hi) => { const c = mk(200, 20); const g = c.getContext('2d');
