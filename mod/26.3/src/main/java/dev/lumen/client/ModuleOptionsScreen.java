@@ -22,11 +22,13 @@ public class ModuleOptionsScreen extends Screen {
     protected void init() {
         int w = 200, x = this.width / 2 - w / 2, y = this.height / 2 - 72;
         addRenderableWidget(new ScaleSlider(x, y, w, module));
-        y += 24;
-        addRenderableWidget(UiButton.of(bgText(), b -> {
-            module.state().background = !module.state().background;
-            b.setMessage(bgText());
-        }, x, y, w, 20));
+        if (module.supportsBackground()) {
+            y += 24;
+            addRenderableWidget(UiButton.of(bgText(), b -> {
+                module.state().background = !module.state().background;
+                b.setMessage(bgText());
+            }, x, y, w, 20));
+        }
         y += 24;
         addRenderableWidget(UiButton.of(colorText(), b -> {
             module.state().color = (module.state().color + 1) % LumenModule.COLORS.length;

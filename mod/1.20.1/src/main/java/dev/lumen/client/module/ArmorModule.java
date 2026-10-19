@@ -12,6 +12,21 @@ public final class ArmorModule extends LumenModule {
         super("armor", "Armor Status", "Shows your worn armor and its durability.", false, 0.90F, 0.40F);
     }
 
+    /** No box: the armor sits straight on the world. */
+    @Override
+    public boolean supportsBackground() {
+        return false;
+    }
+
+    /** Green when healthy, through yellow and orange to red as the armor wears down. A chosen colour (not White) overrides this. */
+    private int numberColor(float fraction) {
+        if (state().color != 0) return color();
+        if (fraction > 0.6F) return 0xFF55FF55;
+        if (fraction > 0.3F) return 0xFFFFFF55;
+        if (fraction > 0.15F) return 0xFFFFAA00;
+        return 0xFFFF5555;
+    }
+
     @Override
     public boolean isHud() {
         return true;
@@ -29,7 +44,6 @@ public final class ArmorModule extends LumenModule {
 
     @Override
     public void render(GuiGraphics g, Minecraft mc) {
-        if (state().background) g.fill(0, 0, width(mc), height(mc), 0x90000000);
         if (mc.player == null) return;
         for (int i = 0; i < 4; i++) {
             ItemStack stack = mc.player.getInventory().armor.get(3 - i); // helmet first
@@ -37,8 +51,8 @@ public final class ArmorModule extends LumenModule {
             if (stack.isEmpty()) continue;
             g.renderItem(stack, 1, y);
             if (stack.isDamageableItem()) {
-                String left = String.valueOf(stack.getMaxDamage() - stack.getDamageValue());
-                g.drawString(mc.font, left, 22, y + 5, color(), true);
+                int max = stack.getMaxDamage(), left = max - stack.getDamageValue();
+                g.drawString(mc.font, String.valueOf(left), 22, y + 5, numberColor(left / (float) max), state().shadow);
             }
         }
     }

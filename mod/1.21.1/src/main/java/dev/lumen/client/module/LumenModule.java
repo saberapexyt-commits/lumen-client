@@ -43,6 +43,11 @@ public abstract class LumenModule {
         state().scale = 1.0F;
     }
 
+    /** Whether the module has a background box the player can switch on or off. */
+    public boolean supportsBackground() {
+        return true;
+    }
+
     /** True for modules that draw on the HUD (and therefore show in the HUD editor). */
     public boolean isHud() {
         return false;

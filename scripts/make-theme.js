@@ -16,7 +16,37 @@ const drawing = `
   const [logo, bg, mark, wide] = await Promise.all([load(logoUrl), load(bgUrl), load(markUrl), load(wideUrl)]);
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   const out = {};
+  // ladder of logo sizes, 12% apart; the Java side builds the same list so it can pick the closest one
+  const LOGO_SIZES = []; for (let w = 200; w < 2000; w = Math.round(w * 1.12)) LOGO_SIZES.push(w); LOGO_SIZES.push(2000);
+  out.logoSizes = LOGO_SIZES.join(',');
   const png = (name, c) => (out[name] = c.toDataURL('image/png'));
+  // Canvas stores premultiplied alpha, so transparent pixels lose their colour (they come back black). Bilinear
+  // filtering in older Minecraft versions then blends that black into the logo edge as a dark outline. This exports
+  // raw RGBA after "bleeding" the nearest visible colour into the transparent area, so edges filter to clean colour.
+  const rawPng = (name, c, iters, pow = 1) => {
+    const w = c.width, h = c.height;
+    const d = c.getContext('2d').getImageData(0, 0, w, h).data;
+    if (pow !== 1) for (let i = 3; i < d.length; i += 4) d[i] = Math.round(255 * Math.pow(d[i] / 255, pow));
+    const filled = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) filled[i] = d[i * 4 + 3] > 0 ? 1 : 0;
+    for (let it = 0; it < iters; it++) {
+      const upd = [];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x; if (filled[i]) continue;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const j = yy * w + xx; if (!filled[j]) continue;
+          r += d[j * 4]; g += d[j * 4 + 1]; b += d[j * 4 + 2]; n++;
+        }
+        if (n) upd.push(i, r / n, g / n, b / n);
+      }
+      for (let k = 0; k < upd.length; k += 4) { const i = upd[k]; d[i * 4] = upd[k + 1]; d[i * 4 + 1] = upd[k + 2]; d[i * 4 + 2] = upd[k + 3]; filled[i] = 1; }
+    }
+    let bin = ''; const CH = 0x8000;
+    for (let i = 0; i < d.length; i += CH) bin += String.fromCharCode.apply(null, d.subarray(i, i + CH));
+    out[name] = { raw: true, w, h, b64: btoa(bin) };
+  };
 
   /* ---- panorama: 6 cube faces. Side faces alternate mirrored so neighbouring edges match exactly. ---- */
   const S = 1024;
@@ -70,7 +100,7 @@ const drawing = `
     const bgc = [p[0], p[1], p[2]]; // top-left pixel = background
     for (let i = 0; i < p.length; i += 4) {
       const dist = Math.max(Math.abs(p[i] - bgc[0]), Math.abs(p[i + 1] - bgc[1]), Math.abs(p[i + 2] - bgc[2]));
-      const a = Math.min(1, Math.max(0, (dist - 10) / 70));
+      const a = Math.min(1, Math.max(0, (dist - 50) / 22)); // keep only the solid logo; the soft outer glow is cut away
       if (a > 0) for (let k = 0; k < 3; k++) p[i + k] = Math.max(0, Math.min(255, Math.round((p[i + k] - bgc[k] * (1 - a)) / a)));
       p[i + 3] = Math.round(a * 255);
     }
@@ -107,15 +137,24 @@ const drawing = `
       const ox = (MW - (a + 28 + b)) / 2;
       mg.drawImage(t, em.x, em.y, em.w, em.h, ox, (MH - em.h * ke3 * sh) / 2, a, em.h * ke3 * sh);
       mg.drawImage(t, wd.x, wd.y, wd.w, wd.h, ox + a + 28, (MH - wd.h * kw3 * sh) / 2, b, wd.h * kw3 * sh);
-      png('lumen_logo', mc);
+      rawPng('lumen_logo', mc, 8); rawPng('legacy_lumen_logo', mc, 8, 1.0);
+      // Pre-shrunk copies. The game samples textures bilinearly, which turns a 4x downscale into noise, so the mod
+      // picks the variant closest to the size it is actually drawn at.
+      const shrink = (src, w) => {
+        const h = Math.round(w * src.height / src.width);
+        let cur = src;
+        while (cur.width / 2 > w) { const t2 = mk(Math.round(cur.width / 2), Math.round(cur.height / 2)); const g2 = t2.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(cur, 0, 0, t2.width, t2.height); cur = t2; }
+        const out2 = mk(w, h); const g3 = out2.getContext('2d'); g3.imageSmoothingQuality = 'high'; g3.drawImage(cur, 0, 0, w, h); return out2;
+      };
+      for (const w of LOGO_SIZES) if (w < 2000) { const sc = shrink(mc, w); rawPng('lumen_logo_' + w, sc, 4); rawPng('legacy_lumen_logo_' + w, sc, 4, 1.0); }
     }
   }
-  png('minecraft', logoC);
-  png('minceraft', logoC);
+  rawPng('minecraft', logoC, 4);
+  rawPng('minceraft', logoC, 4);
   { const c = mk(1024, 128); const g = c.getContext('2d');
     g.font = '700 50px "Segoe UI", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.letterSpacing = '14px'; g.fillStyle = '#9fdcff'; g.shadowColor = 'rgba(61,184,255,0.8)'; g.shadowBlur = 20;
-    g.fillText('JAVA EDITION', Math.max(330, Math.min(744, wordCenterX - 556)), 24); png('edition', c); }
+    g.fillText('JAVA EDITION', Math.max(330, Math.min(744, wordCenterX - 556)), 24); rawPng('edition', c, 4); }
 
   /* ---- buttons (200x20 nine-slice, 3px border) ---- */
   const btn = (fill, edge, bottom, hi) => { const c = mk(200, 20); const g = c.getContext('2d');
@@ -144,7 +183,15 @@ app.whenReady().then(async () => {
   const mark = dataUrl(path.join(root, 'src/renderer/assets/logo-mark.png'), 'image/png');
   const wide = dataUrl(path.join(root, 'src/renderer/assets/logo-wide.png'), 'image/png');
   const out = await win.webContents.executeJavaScript(`(${drawing})(${JSON.stringify(logo)}, ${JSON.stringify(bg)}, ${JSON.stringify(mark)}, ${JSON.stringify(wide)})`);
-  const buf = (n) => Buffer.from(out[n].split(',')[1], 'base64');
+  const zlib = require('zlib');
+  const encodePng = (w, h, rgba) => {
+    const raw = Buffer.alloc((w * 4 + 1) * h);
+    for (let y = 0; y < h; y++) { raw[y * (w * 4 + 1)] = 0; rgba.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4); }
+    const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const crc = Buffer.alloc(4); crc.writeUInt32BE(zlib.crc32(td) >>> 0); return Buffer.concat([len, td, crc]); };
+    const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
+    return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
+  };
+  const buf = (n) => (out[n].raw ? encodePng(out[n].w, out[n].h, Buffer.from(out[n].b64, 'base64')) : Buffer.from(out[n].split(',')[1], 'base64'));
 
   const zip = new AdmZip();
   const T = 'assets/minecraft/textures/gui/';
@@ -189,8 +236,16 @@ app.whenReady().then(async () => {
   const modRes = path.join(root, 'mod/common/assets');
   const put = (rel, b) => { const f = path.join(modRes, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); };
   for (let i = 0; i < 6; i++) put(`lumen/textures/gui/panorama/panorama_${i}.png`, buf('mod_pan_' + i));
-  put('lumen/textures/gui/logo.png', buf('lumen_logo'));
-  put('lumen/textures/gui/logo.png.mcmeta', Buffer.from(JSON.stringify({ texture: { blur: true } })));
+  const blurMeta = Buffer.from(JSON.stringify({ texture: { blur: true } }));
+  // Two logo sets. Minecraft 26.x blends the logo's soft glow lightly; 1.20.1 / 1.21.1 blend it at full strength, which
+  // reads as a thick outline. The legacy set has the glow baked softer so all versions look the same.
+  const logoSets = [['mod/logo-modern/assets', ''], ['mod/logo-legacy/assets', 'legacy_']];
+  for (const [dir, prefix] of logoSets) {
+    const putL = (rel, b) => { const f = path.join(root, dir, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); };
+    putL('lumen/textures/gui/logo_2000.png', buf(prefix + 'lumen_logo'));
+    putL('lumen/textures/gui/logo_2000.png.mcmeta', blurMeta);
+    for (const w of out.logoSizes.split(',').map(Number)) if (w < 2000) { putL(`lumen/textures/gui/logo_${w}.png`, buf(prefix + 'lumen_logo_' + w)); putL(`lumen/textures/gui/logo_${w}.png.mcmeta`, blurMeta); }
+  }
   put('lumen/textures/gui/background.png', buf('mod_bg'));
   put('lumen/textures/gui/background.png.mcmeta', Buffer.from(JSON.stringify({ texture: { blur: true } })));
   put('lumen/icon.png', buf('pack'));

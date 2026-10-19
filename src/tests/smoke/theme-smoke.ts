@@ -55,7 +55,7 @@ async function main() {
   await new Promise<void>((resolve) => {
     let shot = false;
     const game = launchGame(
-      { versionId: prep.versionId, resolved: prep.resolved, javaPath: prep.javaPath, gameDir, session: { name: 'Tester', uuid: '00000000000000000000000000000000', accessToken: '0', userType: 'legacy' }, ramMb: 2048, width: 1280, height: 720, jvmArgs: process.env.LUMEN_JVM ? process.env.LUMEN_JVM.split(' ') : [] },
+      { versionId: prep.versionId, resolved: prep.resolved, javaPath: prep.javaPath, gameDir, session: { name: 'Tester', uuid: '00000000000000000000000000000000', accessToken: '0', userType: 'legacy' }, ramMb: 2048, width: Number(process.env.LUMEN_W || 1280), height: Number(process.env.LUMEN_H || 720), jvmArgs: process.env.LUMEN_JVM ? process.env.LUMEN_JVM.split(' ') : [] },
       profile.id,
       {
         onLine: (l) => {

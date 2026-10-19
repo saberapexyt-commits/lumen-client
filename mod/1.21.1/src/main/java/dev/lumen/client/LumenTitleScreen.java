@@ -23,10 +23,31 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class LumenTitleScreen extends Screen {
     private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
-    private static final ResourceLocation LOGO = ResourceLocation.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo.png");
     private static final CubeMap CUBE_MAP = new CubeMap(ResourceLocation.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/panorama/panorama"));
     private static final int ACCENT = 0xFF3DB8FF;
     private static final int PAD = 12;
+
+    /** Pre-shrunk logo sizes (px wide). The one closest to the on-screen size is used so edges stay clean. */
+    private static final int[] LOGO_SIZES = logoLadder();
+
+    private static int[] logoLadder() {
+        java.util.List<Integer> sizes = new java.util.ArrayList<>();
+        for (int w = 200; w < 2000; w = (int) Math.round(w * 1.12)) sizes.add(w);
+        sizes.add(2000);
+        return sizes.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    private ResourceLocation logoTexture;
+    private int logoTexW, logoTexH;
+
+    private void pickLogo() {
+        double need = logoW * (double) minecraft.getWindow().getGuiScale();
+        int w = LOGO_SIZES[LOGO_SIZES.length - 1];
+        for (int s : LOGO_SIZES) if (s >= need * 0.97) { w = s; break; }
+        logoTexW = w;
+        logoTexH = (int) Math.round(w * 840.0 / 2000.0);
+        logoTexture = ResourceLocation.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo_" + w + ".png");
+    }
 
     private final PanoramaRenderer panorama = new PanoramaRenderer(CUBE_MAP);
     private int panelW, logoX, logoY, logoW, logoH;
@@ -52,6 +73,7 @@ public class LumenTitleScreen extends Screen {
         logoH = (int) (logoW * (LOGO_H / (double) LOGO_W));
         logoX = (panelW - logoW) / 2;
         logoY = Math.max(PAD, (y0 - logoH) / 2);
+        pickLogo();
 
         int y = y0;
         addRenderableWidget(UiButton.of(Component.translatable("menu.singleplayer"), b -> minecraft.setScreen(new SelectWorldScreen(this)), PAD, y, bw, bh));
@@ -88,7 +110,7 @@ public class LumenTitleScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
         g.fill(0, 0, panelW, this.height, 0xB30A0C10);
         g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);
-        g.blit(LOGO, logoX, logoY, logoW, logoH, 0, 0, LOGO_W, LOGO_H, LOGO_W, LOGO_H);
+        g.blit(logoTexture, logoX, logoY, logoW, logoH, 0, 0, logoTexW, logoTexH, logoTexW, logoTexH);
     }
 
     @Override
