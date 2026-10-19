@@ -25,6 +25,7 @@ export async function renderSettings(root, params = {}) {
       h('h2.sec', 'Game'),
       setting('Default memory', `New profiles start with ${(s.defaultRamMb / 1024).toFixed(1)} GB. Each profile can override this.`, h('input', { type: 'range', min: 1024, max: 16384, step: 512, value: s.defaultRamMb, onchange: (e) => set({ defaultRamMb: +e.target.value }).then(draw) })),
       setting('Minimise while playing', 'Minimise the launcher after Minecraft starts.', h('div', h('label.switch', h('input', { type: 'checkbox', checked: s.closeOnLaunch, onchange: (e) => set({ closeOnLaunch: e.target.checked }) }), h('i')))),
+      setting('Lumen menu theme', 'Restyles the Minecraft title screen (background, logo, buttons) with a resource pack added to each profile. Your other resource packs are not touched. Takes effect next launch.', h('div', h('label.switch', h('input', { type: 'checkbox', checked: s.lumenTheme, onchange: (e) => set({ lumenTheme: e.target.checked }) }), h('i')))),
       setting('Java executable', 'Leave blank to use the runtime Mojang provides for each version.', h('input.input', { value: s.javaPathOverride, placeholder: 'Automatic', onchange: (e) => set({ javaPathOverride: e.target.value.trim() }) })),
     ];
   }

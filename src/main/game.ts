@@ -8,6 +8,7 @@ import { installRuntimeFiles, installVanillaBase } from './minecraft/install';
 import { LaunchSession, RunningGame, launchGame, splitArgs } from './minecraft/launch';
 import { JVM_PRESETS, Profile, getProfile, saveProfile } from './profiles';
 import { getSettings } from './settings';
+import { applyTheme } from './theme';
 import { getSession } from './auth/microsoft';
 
 const log = logger('game');
@@ -58,6 +59,7 @@ export async function prepareProfile(profileId: string, task: Task): Promise<Pre
   } else if (!fs.existsSync(javaPath)) {
     throw new LauncherError(`The custom Java path does not exist: ${javaPath}`);
   }
+  await applyTheme(profile.id, settings.lumenTheme);
   return { profile, versionId, javaPath, resolved };
 }
 

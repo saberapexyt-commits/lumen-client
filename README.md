@@ -30,6 +30,7 @@ npm start
 | Import `.mrpack`, CurseForge pack `.zip`; export `.mrpack` and full backups | ✅ `.mrpack` and backup round-trips tested live; CurseForge pack import untested (needs key) |
 | Checksum verification, cancel, retry with backoff, atomic file writes, staged installs | ✅ |
 | Performance pack (curated optimisation mods, resolved per profile), JVM presets, options.txt quick settings, themes | ✅ |
+| Lumen menu theme: restyles the Minecraft title screen (background, logo, buttons, splash text) through a resource pack added to each profile; verified on 1.21.1 and 26.3 | ✅ |
 | HUD editor, in-game overlays, keybind UI, quick-join | 🟡 **Planned** - need an in-game companion mod; shown as planned in the app, not faked |
 
 ## Testing
