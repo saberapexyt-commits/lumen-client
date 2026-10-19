@@ -6,4 +6,4 @@
  * Minecraft services API (https://aka.ms/AppRegistrationForm). Put yours here once, rebuild, and
  * users never see or enter it. Never reuse another launcher's ID.
  */
-export const BUILTIN_CLIENT_ID = '';
+export const BUILTIN_CLIENT_ID = 'aaed9055-6e87-4595-94be-6aa72d2a888f';
