@@ -20,13 +20,21 @@ async function main() {
   const profile = await createProfile({ name: `theme ${mc} ${Date.now()}`, mcVersion: mc, loader });
   const prep = await prepareProfile(profile.id, new Task('t', 't', () => {}));
   const gameDir = P.gameDir(profile.id);
+  if (process.env.LUMEN_SERVERS) {
+    // minimal uncompressed NBT: { servers: [ {name, ip}, ... ] }
+    const str = (v: string) => { const b = Buffer.from(v, 'utf8'); const l = Buffer.alloc(2); l.writeUInt16BE(b.length); return Buffer.concat([l, b]); };
+    const entry = (name: string, ip: string) => Buffer.concat([Buffer.from([8]), str('name'), str(name), Buffer.from([8]), str('ip'), str(ip), Buffer.from([0])]);
+    const list = [['Hypixel', 'mc.hypixel.net'], ['My Survival', 'play.example.com'], ['Creative Plots', 'creative.example.org']].map(([n, i]) => entry(n, i));
+    const count = Buffer.alloc(4); count.writeInt32BE(list.length);
+    fs.writeFileSync(path.join(gameDir, 'servers.dat'), Buffer.concat([Buffer.from([10]), str(''), Buffer.from([9]), str('servers'), Buffer.from([10]), count, ...list, Buffer.from([0])]));
+  }
   console.log('options.txt:', fs.readFileSync(path.join(gameDir, 'options.txt'), 'utf8').trim());
   console.log('pack present:', fs.existsSync(path.join(gameDir, 'resourcepacks', 'Lumen Theme.zip')));
 
   await new Promise<void>((resolve) => {
     let shot = false;
     const game = launchGame(
-      { versionId: prep.versionId, resolved: prep.resolved, javaPath: prep.javaPath, gameDir, session: { name: 'Tester', uuid: '00000000000000000000000000000000', accessToken: '0', userType: 'legacy' }, ramMb: 2048, width: 1280, height: 720 },
+      { versionId: prep.versionId, resolved: prep.resolved, javaPath: prep.javaPath, gameDir, session: { name: 'Tester', uuid: '00000000000000000000000000000000', accessToken: '0', userType: 'legacy' }, ramMb: 2048, width: 1280, height: 720, jvmArgs: process.env.LUMEN_JVM ? process.env.LUMEN_JVM.split(' ') : [] },
       profile.id,
       {
         onLine: (l) => {

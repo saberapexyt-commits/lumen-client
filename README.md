@@ -31,7 +31,8 @@ npm start
 | Checksum verification, cancel, retry with backoff, atomic file writes, staged installs | ✅ |
 | Performance pack (curated optimisation mods, resolved per profile), JVM presets, options.txt quick settings, themes | ✅ |
 | Lumen menu theme: restyles the Minecraft title screen (background, logo, buttons, splash text) through a resource pack added to each profile; verified on 1.21.1 and 26.3 | ✅ |
-| HUD editor, in-game overlays, keybind UI, quick-join | 🟡 **Planned** - need an in-game companion mod; shown as planned in the app, not faked |
+| Lumen in-game mod (Fabric/Quilt, Minecraft 1.21.1): custom main menu with saved-server quick join, and a Lumen settings screen (Right Shift) editing real video options. Built in `mod/`, bundled and installed per profile | ✅ run in the real game |
+| HUD (FPS/CPS/keystrokes), more overlays, keybind UI | 🟡 **Planned** - to be added to the in-game mod; shown as planned in the app, not faked |
 
 ## Testing
 
@@ -52,3 +53,7 @@ Lumen is not affiliated with Mojang, Microsoft, CurseForge or Modrinth. It downl
 Mojang's servers on the user's machine and never redistributes them. Mod files are fetched from the
 providers' official APIs; `.mrpack` exports contain links, not copies of third-party jars, and mods
 whose authors disable third-party downloads on CurseForge are never fetched automatically.
+
+## Building the in-game mod
+
+The mod lives in `mod/` (Fabric Loom, Java 21). Without a system JDK, download a JDK 21 and Gradle 8.10 into `tools/jdk` and `tools/gradle` (git-ignored) and run `powershell scripts/build-mod.ps1`. It copies the jar to `resources/mods/`, which the launcher bundles. Currently built for Minecraft 1.21.1 only.

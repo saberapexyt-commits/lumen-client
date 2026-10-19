@@ -6,3 +6,7 @@ release/
 .shot-home/
 .shots/
 .theme-preview/
+tools/
+mod/build/
+mod/.gradle/
+mod/run/

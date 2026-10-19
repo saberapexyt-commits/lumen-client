@@ -91,6 +91,8 @@ async function toTrash(id: string, file: string): Promise<string | null> {
   return dest;
 }
 
+export const toTrashFile = toTrash;
+
 const jarPath = (id: string, m: Pick<InstalledMod, 'fileName'>, enabled = true) => path.join(P.modsDir(id), m.fileName + (enabled ? '' : '.disabled'));
 
 function targetOf(p: Profile, allowBeta: boolean): Target {

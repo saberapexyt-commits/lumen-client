@@ -10,6 +10,8 @@ export interface Settings {
   closeOnLaunch: boolean;
   /** Install the Lumen menu resource pack into every profile. */
   lumenTheme: boolean;
+  /** Install the Lumen in-game mod (custom main menu, settings screen) into supported profiles. */
+  lumenMod: boolean;
   showSnapshots: boolean;
   showOldVersions: boolean;
   javaPathOverride: string;
@@ -30,6 +32,7 @@ const DEFAULTS: Settings = {
   defaultRamMb: Math.min(4096, Math.max(2048, Math.floor((os.totalmem() / 1024 / 1024) / 4 / 512) * 512)),
   closeOnLaunch: false,
   lumenTheme: true,
+  lumenMod: true,
   showSnapshots: false,
   showOldVersions: false,
   javaPathOverride: '',

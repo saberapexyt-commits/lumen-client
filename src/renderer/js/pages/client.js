@@ -33,9 +33,9 @@ export async function renderClient(root) {
     row('FPS, render distance, VSync, GUI scale', true, 'Profile → Advanced → Quick game settings (writes options.txt).'),
     row('Themes and accent colour', true, 'Settings → General.'),
     row('Per-profile mods, configs and worlds', true, 'Every profile has its own game directory.'),
-    row('HUD (FPS, CPS, keystrokes, armour)', false, 'Renders inside Minecraft, so it needs a client-side companion mod that the launcher will install per profile.'),
-    row('In-game overlays and menus', false, 'Same companion mod. A launcher cannot safely draw over the game.'),
+    row('Lumen in-game mod: main menu + settings screen', true, 'Custom main menu with saved-server quick join, and a Lumen settings screen on Right Shift. Fabric/Quilt on Minecraft 1.21.1 only for now; installed automatically (Settings → General).'),
+    row('HUD (FPS, CPS, keystrokes, armour)', false, 'Will be added to the in-game mod; not built yet.'),
+    row('More in-game overlays', false, 'Same in-game mod; not built yet.'),
     row('Keybind management', false, 'options.txt is editable today; a conflict-aware key-capture UI belongs in-game.'),
-    row('Server quick-join', false, "Will use Minecraft's built-in quick-play argument; not wired up yet."),
   );
 }

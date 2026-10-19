@@ -9,6 +9,7 @@ import { LaunchSession, RunningGame, launchGame, splitArgs } from './minecraft/l
 import { JVM_PRESETS, Profile, getProfile, saveProfile } from './profiles';
 import { getSettings } from './settings';
 import { applyTheme } from './theme';
+import { syncLumenMod } from './lumenmod';
 import { getSession } from './auth/microsoft';
 
 const log = logger('game');
@@ -60,6 +61,7 @@ export async function prepareProfile(profileId: string, task: Task): Promise<Pre
     throw new LauncherError(`The custom Java path does not exist: ${javaPath}`);
   }
   await applyTheme(profile.id, settings.lumenTheme);
+  await syncLumenMod(profile, settings.lumenMod, task);
   return { profile, versionId, javaPath, resolved };
 }
 

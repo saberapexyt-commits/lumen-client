@@ -37,8 +37,12 @@ const drawing = `
     return c;
   };
   png('panorama_0', face(false)); png('panorama_1', face(true)); png('panorama_2', face(false)); png('panorama_3', face(true));
+  const small = (c) => { const t = mk(512, 512); t.getContext('2d').drawImage(c, 0, 0, 512, 512); return t; };
+  for (let i = 0; i < 4; i++) png('mod_pan_' + i, small(face(i % 2 === 1)));
   { const c = mk(S, S); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + sky + ')'; g.fillRect(0, 0, S, S); png('panorama_4', c); }
+  { const c = mk(512, 512); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + sky + ')'; g.fillRect(0, 0, 512, 512); png('mod_pan_4', c); }
   { const c = mk(S, S); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + ground + ')'; g.fillRect(0, 0, S, S); png('panorama_5', c); }
+  { const c = mk(512, 512); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + ground + ')'; g.fillRect(0, 0, 512, 512); png('mod_pan_5', c); }
   { const c = mk(256, 144); const g = c.getContext('2d');
     const r = g.createRadialGradient(128, 72, 40, 128, 72, 150); r.addColorStop(0, 'rgba(6,9,14,0.18)'); r.addColorStop(1, 'rgba(6,9,14,0.72)');
     g.fillStyle = r; g.fillRect(0, 0, 256, 144); png('panorama_overlay', c); }
@@ -93,6 +97,17 @@ const drawing = `
     g.drawImage(t, em.x, em.y, em.w, em.h, x0, (VIS - em.h * ke2) / 2, ew, em.h * ke2);
     g.drawImage(t, wd.x, wd.y, wd.w, wd.h, x0 + ew + gap, (VIS - wd.h * kw2) / 2 - 4, ww, wd.h * kw2);
     wordCenterX = x0 + ew + gap + ww / 2;
+    {
+      const MW = 1000, MH = 420, m = 10;
+      const ke3 = (MH - 2 * m) / em.h;
+      const kw3 = Math.min(ke3 * 1.02, (MH - 2 * m) / wd.h * 0.94);
+      let a = em.w * ke3, b = wd.w * kw3; const sh = Math.min(1, (MW - 2 * m - 14) / (a + 14 + b)); a *= sh; b *= sh;
+      const mc = mk(MW, MH); const mg = mc.getContext('2d'); mg.imageSmoothingQuality = 'high';
+      const ox = (MW - (a + 14 + b)) / 2;
+      mg.drawImage(t, em.x, em.y, em.w, em.h, ox, (MH - em.h * ke3 * sh) / 2, a, em.h * ke3 * sh);
+      mg.drawImage(t, wd.x, wd.y, wd.w, wd.h, ox + a + 14, (MH - wd.h * kw3 * sh) / 2, b, wd.h * kw3 * sh);
+      png('lumen_logo', mc);
+    }
   }
   png('minecraft', logoC);
   png('minceraft', logoC);
@@ -108,6 +123,11 @@ const drawing = `
   png('button', btn('rgba(16,21,30,0.86)', 'rgba(52,62,78,1)', 'rgba(6,9,14,0.7)', 'rgba(255,255,255,0.07)'));
   png('button_highlighted', btn('rgba(24,44,66,0.92)', 'rgba(61,184,255,1)', 'rgba(8,24,38,0.8)', 'rgba(150,220,255,0.18)'));
   png('button_disabled', btn('rgba(14,17,23,0.55)', 'rgba(36,42,54,1)', 'rgba(6,9,14,0.5)', null));
+  png('slider', btn('rgba(10,13,19,0.9)', 'rgba(44,52,66,1)', 'rgba(4,6,9,0.6)', null));
+  png('slider_highlighted', btn('rgba(16,22,32,0.95)', 'rgba(61,184,255,1)', 'rgba(4,10,18,0.7)', null));
+  const handle = (fill, edge) => { const c = mk(8, 20); const g = c.getContext('2d'); g.fillStyle = edge; g.fillRect(0, 0, 8, 20); g.fillStyle = fill; g.fillRect(1, 1, 6, 18); return c; };
+  png('slider_handle', handle('rgba(120,140,165,1)', 'rgba(30,38,50,1)'));
+  png('slider_handle_highlighted', handle('rgba(61,184,255,1)', 'rgba(10,40,60,1)'));
 
   /* ---- pack icon ---- */
   { const c = mk(128, 128); const g = c.getContext('2d'); g.fillStyle = '#0b0d11'; g.fillRect(0, 0, 128, 128); g.drawImage(cut(logo, 342, 50, 338, 336, 120, 120), 4, 4); png('pack', c); }
@@ -139,6 +159,9 @@ app.whenReady().then(async () => {
     zip.addFile(`${T}sprites/widget/${b}.png`, buf(b));
     zip.addFile(`${T}sprites/widget/${b}.png.mcmeta`, nine);
   }
+  const nineH = Buffer.from(JSON.stringify({ gui: { scaling: { type: 'nine_slice', width: 8, height: 20, border: 3 } } }));
+  for (const b of ['slider', 'slider_highlighted']) { zip.addFile(`${T}sprites/widget/${b}.png`, buf(b)); zip.addFile(`${T}sprites/widget/${b}.png.mcmeta`, nine); }
+  for (const b of ['slider_handle', 'slider_handle_highlighted']) { zip.addFile(`${T}sprites/widget/${b}.png`, buf(b)); zip.addFile(`${T}sprites/widget/${b}.png.mcmeta`, nineH); }
   // Older versions (before 1.20.2) draw buttons from widgets.png, so only the background/logo/splashes apply there.
   // An empty splash list means the title screen shows no yellow splash text at all.
   zip.addFile('assets/minecraft/texts/splashes.txt', Buffer.from('\n'));
@@ -161,6 +184,18 @@ app.whenReady().then(async () => {
       ),
     ),
   );
+  // In-game mod resources (so the mod looks right even without the resource pack)
+  const modRes = path.join(root, 'mod/src/main/resources/assets');
+  const put = (rel, b) => { const f = path.join(modRes, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); };
+  for (let i = 0; i < 6; i++) put(`lumen/textures/gui/panorama/panorama_${i}.png`, buf('mod_pan_' + i));
+  put('lumen/textures/gui/logo.png', buf('lumen_logo'));
+  put('lumen/icon.png', buf('pack'));
+  for (const b of ['button', 'button_highlighted', 'button_disabled']) {
+    put(`minecraft/textures/gui/sprites/widget/${b}.png`, buf(b));
+    put(`minecraft/textures/gui/sprites/widget/${b}.png.mcmeta`, nine);
+  }
+  for (const b of ['slider', 'slider_highlighted']) { put(`minecraft/textures/gui/sprites/widget/${b}.png`, buf(b)); put(`minecraft/textures/gui/sprites/widget/${b}.png.mcmeta`, nine); }
+  for (const b of ['slider_handle', 'slider_handle_highlighted']) { put(`minecraft/textures/gui/sprites/widget/${b}.png`, buf(b)); put(`minecraft/textures/gui/sprites/widget/${b}.png.mcmeta`, nineH); }
   fs.mkdirSync(path.join(root, 'resources'), { recursive: true });
   zip.writeZip(path.join(root, 'resources/lumen-theme.zip'));
   // previews for eyeballing
