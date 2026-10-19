@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.lumen.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["MinecraftMixin", "MouseHandlerMixin", "GameRendererMixin"],
+  "client": ["MinecraftMixin", "MouseHandlerMixin", "GameRendererMixin", "HudMixin", "ScreenEffectMixin", "OverlayTextureMixin"],
   "injectors": { "defaultRequire": 1 }
 }

@@ -106,7 +106,9 @@ public class LumenTitleScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         // Screen.render() calls this first, so everything that must sit *under* the buttons is drawn here.
-        panorama.render(g, this.width, this.height, 1.0F, partialTick);
+        int theme = LumenConfig.get().menuTheme;
+        if (theme != 0) MenuThemes.draw((x1, y1, x2, y2, c) -> g.fill(x1, y1, x2, y2, c), this.width, this.height, System.currentTimeMillis(), theme);
+        else panorama.render(g, this.width, this.height, 1.0F, partialTick);
         g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
         g.fill(0, 0, panelW, this.height, 0xB30A0C10);
         g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);

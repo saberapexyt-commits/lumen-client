@@ -106,11 +106,16 @@ public class LumenTitleScreen extends Screen {
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         // Everything that must sit *under* the buttons is drawn here.
         // Static artwork drawn from the mod's own namespace (a resource pack cannot replace it), with a slow drift.
-        double scale = Math.max(this.width / (double) BG_W, this.height / (double) BG_H) * 1.1;
-        int dw = (int) (BG_W * scale), dh = (int) (BG_H * scale);
-        double drift = 0.5 + 0.5 * Math.sin(System.nanoTime() / 1.0e10);
-        int bx = -(int) ((dw - this.width) * drift), by = -(dh - this.height) / 2;
-        g.blit(RenderPipelines.GUI_TEXTURED, BG, bx, by, 0.0F, 0.0F, dw, dh, BG_W, BG_H, BG_W, BG_H);
+        int theme = LumenConfig.get().menuTheme;
+        if (theme != 0) {
+            MenuThemes.draw((x1, y1, x2, y2, c) -> g.fill(x1, y1, x2, y2, c), this.width, this.height, System.currentTimeMillis(), theme);
+        } else {
+            double scale = Math.max(this.width / (double) BG_W, this.height / (double) BG_H) * 1.1;
+            int dw = (int) (BG_W * scale), dh = (int) (BG_H * scale);
+            double drift = 0.5 + 0.5 * Math.sin(System.nanoTime() / 1.0e10);
+            int bx = -(int) ((dw - this.width) * drift), by = -(dh - this.height) / 2;
+            g.blit(RenderPipelines.GUI_TEXTURED, BG, bx, by, 0.0F, 0.0F, dw, dh, BG_W, BG_H, BG_W, BG_H);
+        }
         g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
         g.fill(0, 0, panelW, this.height, 0xB30A0C10);
         g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);

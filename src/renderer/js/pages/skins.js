@@ -79,19 +79,19 @@ const FACES = (u, v, w, hh, d) => ({
 });
 
 /** A rotating CSS-3D player. `s` = pixels per skin pixel. */
-function build3d(canvas, slim, s) {
+function build3d(canvas, slim, s, capeCanvas) {
   const root = h('div.sk3d', { style: { width: `${16 * s}px`, height: `${32 * s}px` } });
   const rig = h('div.sk3d-rig');
   root.append(rig);
-  const mk = (u, v, w, hh, d, cx, cy, grow, overlay) => {
+  const mk = (u, v, w, hh, d, cx, cy, grow, overlay, tex = canvas, z = 0, flip = false) => {
     const W = (w + grow * 2) * s;
     const H = (hh + grow * 2) * s;
     const D = (d + grow * 2) * s;
-    const box = h('div.sk3d-box', { style: { width: `${W}px`, height: `${H}px`, transform: `translate3d(${(cx + 8) * s - W / 2}px, ${(cy + 4) * s - H / 2 + 4 * s}px, 0)` } });
+    const box = h('div.sk3d-box', { style: { width: `${W}px`, height: `${H}px`, transform: `translate3d(${(cx + 8) * s - W / 2}px, ${(cy + 4) * s - H / 2 + 4 * s}px, ${z * s}px)${flip ? ' rotateY(180deg)' : ''}` } });
     const f = FACES(u, v, w, hh, d);
     const face = (name, fw, fh, transform) => {
       const [x, y, cw, ch] = f[name];
-      box.append(h('div.sk3d-face' + (overlay ? '.ov' : ''), { style: { width: `${fw}px`, height: `${fh}px`, left: `${(W - fw) / 2}px`, top: `${(H - fh) / 2}px`, backgroundImage: `url(${crop(canvas, x, y, cw, ch)})`, transform } }));
+      box.append(h('div.sk3d-face' + (overlay ? '.ov' : ''), { style: { width: `${fw}px`, height: `${fh}px`, left: `${(W - fw) / 2}px`, top: `${(H - fh) / 2}px`, backgroundImage: `url(${crop(tex, x, y, cw, ch)})`, transform } }));
     };
     face('front', W, H, `translateZ(${D / 2}px)`);
     face('back', W, H, `rotateY(180deg) translateZ(${D / 2}px)`);
@@ -105,6 +105,7 @@ function build3d(canvas, slim, s) {
     rig.append(mk(u, v, w, hh, d, cx, cy, 0, false));
     rig.append(mk(ou, ov, w, hh, d, cx, cy, grow, true));
   }
+  if (capeCanvas) rig.append(mk(0, 0, 10, 16, 1, 0, 8, 0, false, capeCanvas, -2.6, true)); // hangs behind the body
   return { root, rig };
 }
 
@@ -186,9 +187,17 @@ export async function renderSkins(root) {
     list.replaceChildren(...cards);
   }
 
+  async function ensureAccount() {
+    if (!account && state.accounts.accounts.length) {
+      account = await safe(() => api('skins:account'), { quiet: true });
+      if (!account) account = { error: true };
+    }
+  }
+
   async function drawSide() {
     if (spin) cancelAnimationFrame(spin);
     spin = null;
+    await ensureAccount();
     const s = library.find((x) => x.id === selected);
     if (!s) {
       side.replaceChildren(h('div.sk-panel', h('div.muted', 'Select a skin to preview it.')), await accountPanel());
@@ -197,7 +206,16 @@ export async function renderSkins(root) {
     const cv = await canvasFor(s.id, s.dataUrl).catch((e) => (toast(e.message, 'error'), null));
     const stage = h('div.sk-stage');
     if (cv) {
-      const { root: model, rig } = build3d(cv, s.model === 'slim', 11);
+      let capeCv = null;
+      const activeCape = account?.capes?.find((c) => c.active && c.dataUrl);
+      if (activeCape) capeCv = await loadImage(activeCape.dataUrl).then((i) => {
+        const c = document.createElement('canvas');
+        c.width = 64;
+        c.height = 32;
+        c.getContext('2d').drawImage(i, 0, 0);
+        return c;
+      }).catch(() => null);
+      const { root: model, rig } = build3d(cv, s.model === 'slim', 11, capeCv);
       stage.append(model);
       let ang = 25;
       let drag = null;

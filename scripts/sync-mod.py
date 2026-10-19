@@ -11,7 +11,7 @@ import os
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mod')
 BASE = 'src/main/java/dev/lumen/client/'
 SHARED = [
-    'LumenConfig.java', 'ClickGuiModel.java',
+    'LumenConfig.java', 'ClickGuiModel.java', 'MenuThemes.java', 'LumenOverlayAccess.java', 'module/VisualModules.java',
     'module/ArmorModule.java', 'module/BehaviourModules.java', 'module/CpsTracker.java', 'module/KeystrokesModule.java',
     'module/LumenModule.java', 'module/ModuleManager.java', 'module/ModuleState.java', 'module/Modules.java', 'module/TextModule.java',
 ]

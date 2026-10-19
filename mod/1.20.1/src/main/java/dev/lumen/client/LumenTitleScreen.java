@@ -106,7 +106,9 @@ public class LumenTitleScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         // 1.20.1 does not draw a background for us: panorama, dim, panel and logo first, then the widgets on top.
-        panorama.render(partialTick, 1.0F);
+        int theme = LumenConfig.get().menuTheme;
+        if (theme != 0) MenuThemes.draw((x1, y1, x2, y2, c) -> g.fill(x1, y1, x2, y2, c), this.width, this.height, System.currentTimeMillis(), theme);
+        else panorama.render(partialTick, 1.0F);
         g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
         g.fill(0, 0, panelW, this.height, 0xB30A0C10);
         g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);

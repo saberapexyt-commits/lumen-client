@@ -20,6 +20,8 @@ public final class LumenConfig {
     public boolean customMenu = true;
     /** Show saved servers as quick-join buttons on the Lumen main menu. */
     public boolean quickJoin = true;
+    /** Main menu background: 0 = panorama, 1 = aurora, 2 = starfield, 3 = gradient. */
+    public int menuTheme = 0;
     /** Per-module settings, keyed by module id. */
     public Map<String, ModuleState> modules = new HashMap<>();
     /** Positions of the Lumen menu panels as fractions of the screen: title -> {x, y}. */

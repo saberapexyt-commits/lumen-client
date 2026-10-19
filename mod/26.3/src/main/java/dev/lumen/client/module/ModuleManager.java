@@ -8,6 +8,10 @@ import java.util.List;
 public final class ModuleManager {
     public static final BehaviourModules.Zoom ZOOM = new BehaviourModules.Zoom();
     public static final BehaviourModules.Fullbright FULLBRIGHT = new BehaviourModules.Fullbright();
+    public static final VisualModules.Crosshair CROSSHAIR = new VisualModules.Crosshair();
+    public static final VisualModules.LowFire LOW_FIRE = new VisualModules.LowFire();
+    public static final VisualModules.HitColor HIT_COLOR = new VisualModules.HitColor();
+    public static final VisualModules.Hotbar HOTBAR = new VisualModules.Hotbar();
 
     public static final List<LumenModule> ALL = List.of(
         new Modules.Fps(),
@@ -24,7 +28,11 @@ public final class ModuleManager {
         new Modules.Rotation(),
         new BehaviourModules.ToggleSprint(),
         ZOOM,
-        FULLBRIGHT
+        FULLBRIGHT,
+        CROSSHAIR,
+        HOTBAR,
+        LOW_FIRE,
+        HIT_COLOR
     );
 
     private ModuleManager() {}
@@ -60,6 +68,7 @@ public final class ModuleManager {
     /** Called when the game closes so temporary changes (like fullbright's brightness) are never saved. */
     public static void shutdown(Minecraft mc) {
         FULLBRIGHT.restore(mc);
+        HIT_COLOR.restore(mc);
     }
 
     public static void tick(Minecraft mc) {

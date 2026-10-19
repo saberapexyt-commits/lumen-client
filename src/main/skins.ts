@@ -137,6 +137,7 @@ export interface Cape {
   id: string;
   alias: string;
   url: string;
+  dataUrl: string;
   active: boolean;
 }
 export interface AccountSkins {
@@ -157,7 +158,17 @@ export async function accountSkins(): Promise<AccountSkins> {
       log.warn(`could not fetch current skin: ${e}`);
     }
   }
-  const capes: Cape[] = (prof.capes || []).map((c: any) => ({ id: c.id, alias: c.alias, url: String(c.url).replace(/^http:/, 'https:'), active: c.state === 'ACTIVE' }));
+  const capes: Cape[] = await Promise.all(
+    (prof.capes || []).map(async (c: any) => {
+      let dataUrl = '';
+      try {
+        dataUrl = 'data:image/png;base64,' + (await downloadTexture(c.url)).toString('base64');
+      } catch (e) {
+        log.warn(`could not fetch cape ${c.alias}: ${e}`);
+      }
+      return { id: c.id, alias: c.alias, url: String(c.url).replace(/^http:/, 'https:'), dataUrl, active: c.state === 'ACTIVE' };
+    }),
+  );
   return { name: prof.name, skin, capes };
 }
 

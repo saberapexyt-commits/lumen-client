@@ -9,6 +9,12 @@ public final class ModuleState {
     public int color = 0;
     public boolean background = true;
     public boolean shadow = true;
+    /** Extra settings used by the visual modules (style / length / gap / thickness / outline). */
+    public int style = 0;
+    public int size = 5;
+    public int gap = 2;
+    public int thickness = 1;
+    public boolean outline = true;
 
     public ModuleState() {}
 

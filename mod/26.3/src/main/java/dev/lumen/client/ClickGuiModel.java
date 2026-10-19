@@ -3,6 +3,8 @@ package dev.lumen.client;
 import dev.lumen.client.module.BehaviourModules;
 import dev.lumen.client.module.LumenModule;
 import dev.lumen.client.module.ModuleManager;
+import dev.lumen.client.module.ModuleState;
+import dev.lumen.client.module.VisualModules;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -94,6 +96,10 @@ public final class ClickGuiModel {
         Panel menu = byTitle.get("Menu");
         menu.rows.add(new Row("Custom main menu", "Replace the vanilla title screen with the Lumen menu.", () -> c.customMenu, () -> c.customMenu = !c.customMenu));
         menu.rows.add(new Row("Quick join list", "Show your saved servers as one-click buttons on the Lumen menu.", () -> c.quickJoin, () -> c.quickJoin = !c.quickJoin));
+        Row bg = new Row("Menu background", "Animated backgrounds for the Lumen main menu. Click to cycle.", () -> c.menuTheme != 0, () -> c.menuTheme = (c.menuTheme + 1) % MenuThemes.NAMES.length);
+        bg.opts.add(new Opt(() -> MenuThemes.NAMES[Math.floorMod(c.menuTheme, MenuThemes.NAMES.length)],
+            b -> c.menuTheme = Math.floorMod(c.menuTheme + (b == 0 ? 1 : -1), MenuThemes.NAMES.length)));
+        menu.rows.add(bg);
         for (Panel p : byTitle.values()) if (!p.rows.isEmpty()) panels.add(p);
     }
 
@@ -109,10 +115,29 @@ public final class ClickGuiModel {
             if (m.supportsBackground()) r.opts.add(new Opt(() -> "Background: " + (m.state().background ? "ON" : "OFF"), b -> m.state().background = !m.state().background));
             r.opts.add(new Opt(() -> "Reset position", b -> m.resetPosition()));
         }
+        if (m instanceof VisualModules.Crosshair) {
+            ModuleState s = m.state();
+            r.opts.add(new Opt(() -> "Style: " + VisualModules.Crosshair.STYLES[Math.floorMod(s.style, VisualModules.Crosshair.STYLES.length)],
+                b -> s.style = Math.floorMod(s.style + (b == 0 ? 1 : -1), VisualModules.Crosshair.STYLES.length)));
+            r.opts.add(colourOpt(m));
+            r.opts.add(new Opt(() -> "Size: " + s.size, b -> s.size = Math.max(1, Math.min(16, s.size + (b == 0 ? 1 : -1)))));
+            r.opts.add(new Opt(() -> "Gap: " + s.gap, b -> s.gap = Math.max(0, Math.min(10, s.gap + (b == 0 ? 1 : -1)))));
+            r.opts.add(new Opt(() -> "Thickness: " + s.thickness, b -> s.thickness = Math.max(1, Math.min(4, s.thickness + (b == 0 ? 1 : -1)))));
+            r.opts.add(new Opt(() -> "Outline: " + (s.outline ? "ON" : "OFF"), b -> s.outline = !s.outline));
+        }
+        if (m instanceof VisualModules.LowFire) {
+            r.opts.add(new Opt(() -> "Height: " + (Math.floorMod(m.state().style, 3) + 1) + "/3", b -> m.state().style = Math.floorMod(m.state().style + (b == 0 ? 1 : -1), 3)));
+        }
+        if (m instanceof VisualModules.HitColor || m instanceof VisualModules.Hotbar) r.opts.add(colourOpt(m));
         if (m instanceof BehaviourModules.Zoom) {
             r.opts.add(new Opt(() -> "Zoom strength: " + Math.round((1 - BehaviourModules.Zoom.factor) * 100) + "%",
                 b -> BehaviourModules.Zoom.factor = (float) Math.max(0.04, Math.min(0.9, BehaviourModules.Zoom.factor * (b == 0 ? 0.9 : 1 / 0.9)))));
         }
+    }
+
+    private static Opt colourOpt(LumenModule m) {
+        return new Opt(() -> "Colour: " + LumenModule.COLOR_NAMES[Math.floorMod(m.state().color, LumenModule.COLORS.length)],
+            b -> m.state().color = Math.floorMod(m.state().color + (b == 0 ? 1 : -1), LumenModule.COLORS.length));
     }
 
     /* ---------- layout ---------- */
