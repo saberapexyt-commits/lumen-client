@@ -1,0 +1,9 @@
+:root{--bg:#0b0d11;--panel:#12151b;--line:#20252f;--text:#e7ebf1;--dim:#9aa3b2;--accent:#3db8ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 'Segoe UI',system-ui,sans-serif}
+a{color:var(--accent)}header{border-bottom:1px solid var(--line);padding:14px 24px;display:flex;gap:12px;align-items:center}
+header img{width:34px;height:34px}header b{letter-spacing:3px}header nav{margin-left:auto;display:flex;gap:18px;font-size:14px}
+main{max-width:760px;margin:0 auto;padding:40px 24px 80px}h1{font-size:30px;margin:0 0 6px}h2{font-size:18px;margin:34px 0 6px}
+.muted{color:var(--dim)}.btn{display:inline-block;background:var(--accent);color:#04202e;font-weight:700;padding:11px 22px;border-radius:4px;text-decoration:none;margin:14px 10px 0 0}
+.btn.alt{background:transparent;color:var(--text);border:1px solid #2c3340}.hero{text-align:center;padding:30px 0 10px}.hero img{width:min(480px,90%)}
+ul{padding-left:20px}footer{border-top:1px solid var(--line);padding:22px;text-align:center;color:var(--dim);font-size:13px}
+code{background:var(--panel);padding:1px 5px;border-radius:3px}
