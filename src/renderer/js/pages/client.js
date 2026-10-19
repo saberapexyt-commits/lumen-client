@@ -33,11 +33,11 @@ export async function renderClient(root) {
     row('FPS, render distance, VSync, GUI scale', true, 'Profile → Advanced → Quick game settings (writes options.txt).'),
     row('Themes and accent colour', true, 'Settings → General.'),
     row('Per-profile mods, configs and worlds', true, 'Every profile has its own game directory.'),
-    row('Lumen in-game mod: mods menu (Right Shift)', true, 'Switch modules on and off, set size and colour, and drag them into place with the HUD editor. Fabric/Quilt on Minecraft 1.21.1 only for now; installed automatically (Settings → General).'),
+    row('Lumen in-game mod: mods menu (Right Shift)', true, 'Switch modules on and off, set size and colour, and drag them into place with the HUD editor. Fabric/Quilt on Minecraft 1.20.1, 1.21.1 and 26.3; installed automatically (Settings → General).'),
     row('HUD modules: FPS, CPS, coordinates, ping, clock, keystrokes, armor status', true, 'Part of the in-game mod.'),
     row('Zoom (hold C) and Toggle Sprint', true, 'Part of the in-game mod.'),
     row('Custom main menu with saved-server quick join', true, 'Part of the in-game mod.'),
-    row('Other Minecraft versions', false, 'The in-game mod is built per Minecraft version. 1.21.1 is done; others are planned.'),
+    row('Other Minecraft versions', false, 'The in-game mod is built separately for each Minecraft version because Mojang changes the rendering code often. Other versions are planned.'),
     row('Keybind management', false, 'options.txt is editable today; a conflict-aware key-capture UI belongs in-game.'),
   );
 }

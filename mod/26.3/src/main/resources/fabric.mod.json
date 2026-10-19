@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "lumen_client",
+  "version": "${version}",
+  "name": "Lumen Client",
+  "description": "In-game companion for the Lumen launcher: custom main menu and a Lumen settings screen.",
+  "authors": ["Lumen Client contributors"],
+  "contact": { "sources": "https://github.com/saberapexyt-commits/lumen-client" },
+  "license": "MIT",
+  "icon": "assets/lumen/icon.png",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.lumen.client.LumenClient"] },
+  "mixins": ["lumen.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

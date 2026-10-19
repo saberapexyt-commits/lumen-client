@@ -10,3 +10,8 @@ tools/
 mod/build/
 mod/.gradle/
 mod/run/
+mod/*/.gradle/
+mod/*/build/
+mod/*/run/
+mod/.gradle/
+mod/build/

@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.lumen.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["MinecraftMixin", "MouseHandlerMixin", "CameraMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

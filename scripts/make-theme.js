@@ -185,7 +185,7 @@ app.whenReady().then(async () => {
     ),
   );
   // In-game mod resources (so the mod looks right even without the resource pack)
-  const modRes = path.join(root, 'mod/src/main/resources/assets');
+  const modRes = path.join(root, 'mod/common/assets');
   const put = (rel, b) => { const f = path.join(modRes, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); };
   for (let i = 0; i < 6; i++) put(`lumen/textures/gui/panorama/panorama_${i}.png`, buf('mod_pan_' + i));
   put('lumen/textures/gui/logo.png', buf('lumen_logo'));

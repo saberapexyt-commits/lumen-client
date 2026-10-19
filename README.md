@@ -31,7 +31,7 @@ npm start
 | Checksum verification, cancel, retry with backoff, atomic file writes, staged installs | ✅ |
 | Performance pack (curated optimisation mods, resolved per profile), JVM presets, options.txt quick settings, themes | ✅ |
 | Lumen menu theme: restyles the Minecraft title screen (background, logo, buttons, splash text) through a resource pack added to each profile; verified on 1.21.1 and 26.3 | ✅ |
-| Lumen in-game mod (Fabric/Quilt, Minecraft 1.21.1): custom main menu with saved-server quick join, and a Lumen settings screen (Right Shift) editing real video options. Built in `mod/`, bundled and installed per profile | ✅ run in the real game |
+| Lumen in-game mod (Fabric/Quilt, Minecraft 1.20.1, 1.21.1, 26.3): custom main menu with saved-server quick join, a mods menu (Right Shift) with FPS, CPS, coordinates, ping, clock, keystrokes, armor status, toggle sprint and zoom (hold C), plus a drag-to-position HUD editor. Built in `mod/<version>/`, bundled and installed per profile | ✅ run in the real game |
 | HUD (FPS/CPS/keystrokes), more overlays, keybind UI | 🟡 **Planned** - to be added to the in-game mod; shown as planned in the app, not faked |
 
 ## Testing
@@ -56,4 +56,4 @@ whose authors disable third-party downloads on CurseForge are never fetched auto
 
 ## Building the in-game mod
 
-The mod lives in `mod/` (Fabric Loom, Java 21). Without a system JDK, download a JDK 21 and Gradle 8.10 into `tools/jdk` and `tools/gradle` (git-ignored) and run `powershell scripts/build-mod.ps1`. It copies the jar to `resources/mods/`, which the launcher bundles. Currently built for Minecraft 1.21.1 only.
+Each Minecraft version is its own Gradle project in `mod/<version>/` (Fabric Loom), sharing textures in `mod/common/assets`. Mojang changes its rendering code often, so the Minecraft-facing code is ported per version (1.20.1 and 1.21.1 are close; 26.x is a larger rewrite). Tooling goes in `tools/` (git-ignored): `jdk21` (1.20.1, 1.21.1), `jdk25` (26.x), and `gradle/gradle-8.10.2` only to bootstrap wrappers. Build with `powershell scripts/build-mod.ps1 -Version 26.3`; it copies the jar to `resources/mods/`, which the launcher bundles.

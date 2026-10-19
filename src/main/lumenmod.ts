@@ -11,7 +11,7 @@ import { modrinth } from './mods/modrinth';
 const log = logger('lumenmod');
 
 /** Minecraft versions the bundled in-game mod is built for. */
-const SUPPORTED: Record<string, string> = { '1.21.1': 'lumen-client-mc1.21.1.jar' };
+const SUPPORTED: Record<string, string> = { '1.21.1': 'lumen-client-mc1.21.1.jar', '26.3': 'lumen-client-mc26.3.jar', '1.20.1': 'lumen-client-mc1.20.1.jar' };
 
 function bundledDir(): string {
   const rp = (process as any).resourcesPath as string | undefined;
