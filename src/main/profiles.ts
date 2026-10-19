@@ -88,7 +88,7 @@ function uniqueId(name: string): string {
   return id;
 }
 
-const COLORS = ['#7c5cff', '#22c1c3', '#ff6b6b', '#f7b733', '#4ade80', '#38bdf8', '#f472b6', '#fb923c'];
+const COLORS = ['#2f8fe8', '#1fb5a8', '#e5a82b', '#4cb871', '#e0674f', '#7a7fe0', '#c9569a', '#5b8bb0'];
 
 export async function createProfile(input: CreateProfileInput): Promise<Profile> {
   const name = input.name.trim();

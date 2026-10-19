@@ -162,6 +162,7 @@ const handlers: Record<string, Handler> = {
       return mods.installPlan(profileId, plan, t, optional);
     }),
   'mods:list': (profileId: string) => mods.listInstalled(profileId),
+  'mods:count': (profileId: string) => mods.countMods(profileId),
   'mods:toggle': (profileId: string, key: string, enabled: boolean) => mods.setEnabled(profileId, key, enabled),
   'mods:dependents': (profileId: string, key: string) => mods.dependentsOf(profileId, key),
   'mods:remove': (profileId: string, key: string) => mods.removeMod(profileId, key),
@@ -250,8 +251,9 @@ function createWindow() {
     height: 760,
     minWidth: 960,
     minHeight: 620,
-    backgroundColor: '#0e0f14',
+    backgroundColor: '#0b0d11',
     title: 'Lumen Client',
+    icon: path.join(__dirname, '..', 'renderer', 'assets', 'logo-mark.png'),
     show: false,
     frame: false,
     webPreferences: {
@@ -283,7 +285,12 @@ async function screenshotTour(dir: string) {
   });
   await new Promise<void>((r) => wc.once('did-finish-load', () => r()));
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  await wait(1500);
+  await wait(3500);
+  if (process.env.LUMEN_SHOT_SIZE) {
+    const [w, h] = process.env.LUMEN_SHOT_SIZE.split(',').map(Number);
+    win!.setSize(w, h);
+    await wait(600);
+  }
   const extra = (process.env.LUMEN_SHOT_JS || '').split(';;').filter(Boolean);
   for (const page of ['home', 'profiles', 'browse', 'installed', 'client', 'console', 'settings']) {
     await wc.executeJavaScript(`window.__navigate('${page}')`);

@@ -23,7 +23,7 @@ export interface Settings {
 
 const DEFAULTS: Settings = {
   theme: 'dark',
-  accent: '#7c5cff',
+  accent: '#3db8ff',
   language: 'en',
   defaultRamMb: Math.min(4096, Math.max(2048, Math.floor((os.totalmem() / 1024 / 1024) / 4 / 512) * 512)),
   closeOnLaunch: false,
@@ -42,6 +42,7 @@ let cache: Settings | null = null;
 
 export async function getSettings(): Promise<Settings> {
   if (!cache) cache = { ...DEFAULTS, ...(await readJson<Partial<Settings>>(P.settings(), {})) };
+  if (cache.accent === '#7c5cff') cache.accent = DEFAULTS.accent; // old default from before the rebrand
   return cache;
 }
 

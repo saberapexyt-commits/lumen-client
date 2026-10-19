@@ -537,3 +537,7 @@ export async function installPerformancePack(profileId: string, task: Task): Pro
   const r = await installPlan(profileId, merged, task);
   return { ...r, unavailable };
 }
+
+export async function countMods(profileId: string): Promise<number> {
+  return (await loadIndex(profileId)).mods.length;
+}

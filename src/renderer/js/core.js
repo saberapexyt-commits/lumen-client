@@ -16,6 +16,7 @@ export const state = {
   states: {}, // profileId -> 'starting' | 'running'
   tasks: {}, // taskId -> task json
   gameLogs: {}, // profileId -> lines[]
+  playTasks: {}, // profileId -> taskId (so the Home page can show launch progress)
   appInfo: {},
 };
 
@@ -38,7 +39,7 @@ export function h(tag, attrs, ...children) {
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v === undefined || v === null || v === false) continue;
     if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
-    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k === 'style' && typeof v === 'object') for (const [sk, sv] of Object.entries(v)) sk.startsWith('--') ? el.style.setProperty(sk, sv) : (el.style[sk] = sv);
     else if (k === 'class') el.classList.add(...String(v).split(' ').filter(Boolean));
     else if (k === 'value') el.value = v;
     else if (k === 'checked' || k === 'disabled' || k === 'selected') el[k] = !!v;
@@ -75,6 +76,15 @@ const ICONS = {
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
   edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  chevron: 'M6 9l6 6 6-6',
+  layers: 'M12 2l10 5-10 5L2 7zM2 17l10 5 10-5M2 12l10 5 10-5',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+  up: 'M12 19V5M5 12l7-7 7 7',
+  sliders: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+  gamepad: 'M6 12h4M8 10v4M15 13h.01M18 11h.01M17.3 5H6.7a4 4 0 0 0-3.9 3.2l-1.2 6A3 3 0 0 0 4.5 18c1 0 1.5-.5 2-1l1.5-2h8l1.5 2c.5.5 1 1 2 1a3 3 0 0 0 2.9-3.8l-1.2-6A4 4 0 0 0 17.3 5z',
+  cpu: 'M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z',
+  star: 'M12 2l3 6.9 7.5.7-5.7 5 1.8 7.4L12 18l-6.6 4 1.8-7.4-5.7-5 7.5-.7z',
 };
 export function icon(name, size) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -93,14 +103,14 @@ export function icon(name, size) {
 
 export const btn = (label, opts = {}) =>
   h(
-    'button.btn' + (opts.cls ? '.' + opts.cls.split(' ').join('.') : ''),
+    'button.btn' + (opts.cls ? '.' + opts.cls.split(' ').join('.') : '') + (!label && opts.icon ? '.icon' : ''),
     { onclick: opts.onclick, disabled: opts.disabled, title: opts.title },
     opts.icon ? icon(opts.icon) : null,
     label,
   );
 
 export function toast(message, kind = '') {
-  const t = h('div.toast' + (kind ? '.' + kind : ''), String(message));
+  const t = h('div.toast' + (kind ? '.' + kind : ''), kind === 'error' ? icon('alert') : kind === 'ok' ? icon('check') : icon('info'), h('div', String(message)));
   document.getElementById('toasts').append(t);
   setTimeout(() => t.remove(), kind === 'error' ? 8000 : 4000);
 }
@@ -170,10 +180,16 @@ export const fmtPlay = (ms) => (ms < 60000 ? '0m' : ms < 3.6e6 ? `${Math.floor(m
 export const LOADER_NAMES = { vanilla: 'Vanilla', fabric: 'Fabric', quilt: 'Quilt', forge: 'Forge', neoforge: 'NeoForge' };
 export const profileLabel = (p) => `${p.mcVersion} · ${LOADER_NAMES[p.loader]}${p.loaderVersion && p.loader !== 'vanilla' ? ' ' + p.loaderVersion.replace(p.mcVersion + '-', '') : ''}`;
 
+export const tile = (p, cls = '') => h('div.tile' + (cls ? '.' + cls : ''), { style: { '--tc': p.color } }, p.name.trim().slice(0, 1).toUpperCase());
+
+export function emptyState(iconName, title, text, ...actions) {
+  return h('div.empty', icon(iconName), h('b', title), text ? h('div', text) : null, actions.length ? h('div.row', { style: { marginTop: '8px' } }, actions) : null);
+}
+
 export function modIcon(url, title) {
   const box = h('div.micon', (title || '?').trim().slice(0, 2).toUpperCase());
   if (url) {
-    const img = h('img', { src: url, loading: 'lazy', alt: '' });
+    const img = h('img', { src: url, alt: '' });
     img.onload = () => (box.textContent = '', box.append(img));
   }
   return box;
