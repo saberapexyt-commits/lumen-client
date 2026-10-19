@@ -2,11 +2,14 @@ package dev.lumen.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.lumen.client.module.ModuleState;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Persisted Lumen options (config/lumen-client.json). */
 public final class LumenConfig {
@@ -17,6 +20,8 @@ public final class LumenConfig {
     public boolean customMenu = true;
     /** Show saved servers as quick-join buttons on the Lumen main menu. */
     public boolean quickJoin = true;
+    /** Per-module settings, keyed by module id. */
+    public Map<String, ModuleState> modules = new HashMap<>();
 
     private static Path file() {
         return FabricLoader.getInstance().getConfigDir().resolve("lumen-client.json");
@@ -31,6 +36,7 @@ public final class LumenConfig {
                 LumenClient.LOGGER.warn("Could not read lumen-client.json, using defaults", e);
             }
             instance = loaded != null ? loaded : new LumenConfig();
+            if (instance.modules == null) instance.modules = new HashMap<>();
         }
         return instance;
     }

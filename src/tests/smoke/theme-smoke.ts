@@ -28,6 +28,14 @@ async function main() {
     const count = Buffer.alloc(4); count.writeInt32BE(list.length);
     fs.writeFileSync(path.join(gameDir, 'servers.dat'), Buffer.concat([Buffer.from([10]), str(''), Buffer.from([9]), str('servers'), Buffer.from([10]), count, ...list, Buffer.from([0])]));
   }
+  if (process.env.LUMEN_ALLMODS) {
+    const ids = ['fps', 'cps', 'coords', 'keystrokes', 'armor', 'ping', 'clock', 'togglesprint', 'zoom'];
+    const pos: Record<string, [number, number]> = { fps: [0.01, 0.02], cps: [0.01, 0.08], coords: [0.01, 0.14], ping: [0.01, 0.2], clock: [0.01, 0.26], keystrokes: [0.01, 0.6], armor: [0.9, 0.4] };
+    const modules: Record<string, unknown> = {};
+    for (const id of ids) modules[id] = { enabled: true, x: pos[id]?.[0] ?? 0, y: pos[id]?.[1] ?? 0, scale: 1, color: 0, background: true };
+    fs.mkdirSync(path.join(gameDir, 'config'), { recursive: true });
+    fs.writeFileSync(path.join(gameDir, 'config', 'lumen-client.json'), JSON.stringify({ customMenu: true, quickJoin: true, modules }));
+  }
   console.log('options.txt:', fs.readFileSync(path.join(gameDir, 'options.txt'), 'utf8').trim());
   console.log('pack present:', fs.existsSync(path.join(gameDir, 'resourcepacks', 'Lumen Theme.zip')));
 
@@ -46,13 +54,13 @@ async function main() {
               execFileSync('powershell', ['-NoProfile', '-File', path.join(process.cwd(), 'scripts', 'capture-window.ps1'), '-TitlePrefix', 'Minecraft', '-Out', out]);
               console.log('screenshot saved', out);
               game.child.kill();
-            }, 14000);
+            }, Number(process.env.LUMEN_DELAY || 14000));
           }
         },
         onExit: () => resolve(),
       },
     );
-    setTimeout(() => game.child.kill(), 150_000);
+    setTimeout(() => game.child.kill(), 240_000);
   });
 }
 main().catch((e) => {

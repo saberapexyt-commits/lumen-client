@@ -5,7 +5,10 @@ $env:JAVA_HOME = (Get-ChildItem "$root\tools\jdk" -Directory | Select-Object -Fi
 $env:GRADLE_USER_HOME = "$root\tools\gradle-home"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 Set-Location "$root\mod"
-& "$root\mod\gradlew.bat" build --no-daemon 2>&1 | Select-Object -Last 30
+$out = & "$root\mod\gradlew.bat" build --no-daemon 2>&1
+$ok = $LASTEXITCODE -eq 0
+$out | Select-Object -Last 30
+if (-not $ok) { Write-Output "MOD BUILD FAILED"; exit 1 }
 $jar = Get-ChildItem "$root\mod\build\libs" -Filter "lumen-client-mc*.jar" | Where-Object { $_.Name -notmatch 'sources|dev' } | Select-Object -First 1
 if ($jar) {
   New-Item -ItemType Directory -Force "$root\resources\mods" | Out-Null
