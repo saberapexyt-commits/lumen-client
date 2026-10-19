@@ -4,10 +4,9 @@ import { playProfile, openProfileDialog } from './profiles.js';
 
 export async function renderHome(root) {
   const hub = h('div.hub');
-  const bg = h('div.hub-bg');
   const main = h('div.hub-main');
   const side = h('div.hub-side', h('h3', 'Minecraft news'), h('div.news-list', h('div', { style: { padding: '16px', textAlign: 'center' } }, h('span.spinner'))));
-  hub.append(bg, main, side);
+  hub.append(main, side);
   root.append(hub);
 
   let modCount = null;
@@ -77,13 +76,6 @@ export async function renderHome(root) {
   if (!news) {
     list.replaceChildren(h('div.small.muted', { style: { padding: '14px' } }, 'News is unavailable right now (offline?).'));
     return off;
-  }
-  const featured = news.find((n) => n.type === 'release' && n.image) || news.find((n) => n.image);
-  if (featured) {
-    bg.style.backgroundImage = `url("${featured.image}")`;
-    const img = new Image();
-    img.onload = () => bg.classList.add('on');
-    img.src = featured.image;
   }
   list.replaceChildren(
     ...news.slice(0, 7).map((n) =>

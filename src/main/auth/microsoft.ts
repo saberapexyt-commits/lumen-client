@@ -3,6 +3,7 @@ import { LauncherError, logger } from '../logger';
 import { postJson, getJson, USER_AGENT } from '../net';
 import { decryptSecret, encryptSecret, getSettings } from '../settings';
 import { readJson, sleep, writeJson } from '../util';
+import { BUILTIN_CLIENT_ID } from './client-id';
 
 const log = logger('auth');
 
@@ -15,6 +16,8 @@ const log = logger('auth');
  */
 const TENANT = 'consumers';
 const SCOPE = 'XboxLive.signin offline_access';
+
+export const hasClientId = async () => !!((await getSettings()).msClientId.trim() || BUILTIN_CLIENT_ID || process.env.LUMEN_MS_CLIENT_ID);
 
 export interface Account {
   id: string; // Minecraft UUID (no dashes)
@@ -40,10 +43,10 @@ export interface DeviceCode {
 }
 
 async function clientId(): Promise<string> {
-  const id = (await getSettings()).msClientId.trim() || process.env.LUMEN_MS_CLIENT_ID || '';
+  const id = (await getSettings()).msClientId.trim() || BUILTIN_CLIENT_ID || process.env.LUMEN_MS_CLIENT_ID || '';
   if (!id)
     throw new LauncherError(
-      'No Microsoft application client ID is configured. Open Settings → Accounts and enter the client ID of your registered Microsoft app (see docs/SETUP.md).',
+      'Sign-in is not set up in this build yet: it needs a Microsoft app registration (client ID). See docs/SETUP.md.',
     );
   return id;
 }

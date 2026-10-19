@@ -58,7 +58,7 @@ kbd { background: var(--raised); border: 1px solid var(--line2); border-radius: 
 .tb-controls button { width: 44px; height: 32px; border: 0; background: transparent; display: grid; place-items: center; color: var(--dim); }
 .tb-controls button:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 .tb-controls button.close:hover { background: #d93545; color: #fff; }
-#shell { display: flex; height: 100%; }
+#shell { display: flex; height: 100%; position: relative; z-index: 1; }
 #view { flex: 1; min-width: 0; overflow-y: auto; position: relative; }
 
 /* ---------- sidebar ---------- */
@@ -308,3 +308,31 @@ input[type='checkbox'] { accent-color: var(--accent); }
 @keyframes splashIn { from { opacity: 0; transform: scale(0.97); } }
 #splash .bar { width: 180px; }
 #splash .st { font-size: 11.5px; color: var(--faint); letter-spacing: 1px; margin-top: -14px; }
+
+/* ---------- atmosphere: blurred world render behind the whole app ---------- */
+#bg { position: fixed; inset: -20px; background: url(assets/bg.webp) center / cover; filter: blur(11px) saturate(1.1); z-index: 0; transition: filter 0.5s ease; }
+#bg-dim { position: fixed; inset: 0; z-index: 0; background: rgba(8, 10, 14, 0.86); transition: background 0.5s ease; }
+body.home #bg { filter: blur(3px) saturate(1.12); }
+body.home #bg-dim { background: linear-gradient(180deg, rgba(8, 10, 14, 0.15), rgba(8, 10, 14, 0.5)); }
+:root[data-theme='light'] #bg, :root[data-theme='light'] #bg-dim { display: none; }
+#sidebar { background: rgba(10, 12, 16, 0.8); backdrop-filter: blur(16px); }
+.split-list, .browse-side, .settings-nav { background: rgba(10, 12, 16, 0.55); backdrop-filter: blur(12px); }
+.browse-top { background: rgba(10, 12, 16, 0.6); backdrop-filter: blur(12px); }
+.mrow { background: rgba(10, 12, 16, 0.38); padding-left: 8px; padding-right: 8px; margin-bottom: 1px; border-bottom: 0; }
+.mrow:hover { background: rgba(26, 31, 40, 0.7); }
+.kv > div { border-bottom-color: rgba(255, 255, 255, 0.07); }
+.setting { border-bottom-color: rgba(255, 255, 255, 0.07); }
+.health, .note { background: rgba(14, 17, 22, 0.78); }
+.pitem:hover, .pitem.on, .cat:hover, .cat.on { background: rgba(255, 255, 255, 0.07); }
+.hub { background: transparent; }
+.hub::before { background: linear-gradient(90deg, rgba(8, 10, 14, 0.9) 0%, rgba(8, 10, 14, 0.55) 40%, rgba(8, 10, 14, 0.05) 72%), linear-gradient(0deg, rgba(8, 10, 14, 0.8) 0%, transparent 42%); }
+.hub-bg { display: none; }
+:root[data-theme='light'] #sidebar, :root[data-theme='light'] .split-list, :root[data-theme='light'] .browse-side, :root[data-theme='light'] .settings-nav { background: var(--side); backdrop-filter: none; }
+:root[data-theme='light'] .mrow { background: transparent; }
+
+/* ---------- in-launcher update card ---------- */
+.update { border: 1px solid var(--line2); border-left: 3px solid var(--gold); background: rgba(18, 21, 27, 0.9); padding: 9px 10px; margin-bottom: 8px; font-size: 12px; }
+.update b { display: block; font-size: 12.5px; margin-bottom: 2px; }
+.update .bar { margin-top: 6px; }
+.update .btn { width: 100%; margin-top: 8px; }
+@media (max-width: 1040px) { .update { padding: 6px; } .update b, .update span, .update .bar { display: none; } .update .btn span { display: none; } }

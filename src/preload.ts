@@ -4,7 +4,7 @@ import { contextBridge, ipcRenderer } from 'electron';
  * The only bridge between the UI and the main process. Channels are allow-listed so a compromised
  * page can never reach arbitrary IPC.
  */
-const EVENTS = new Set(['task:update', 'game:state', 'game:log', 'auth:done', 'log:line', 'window:state']);
+const EVENTS = new Set(['task:update', 'game:state', 'game:log', 'auth:done', 'log:line', 'window:state', 'update:state']);
 
 contextBridge.exposeInMainWorld('lumen', {
   invoke: async (channel: string, ...args: unknown[]) => {

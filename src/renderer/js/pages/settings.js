@@ -33,7 +33,11 @@ export async function renderSettings(root, params = {}) {
     const s = state.settings;
     const list = state.accounts.accounts;
     const signIn = async () => {
-      if (!s.msClientId) return toast('Add your Microsoft application client ID below first.', 'error');
+      if (!state.appInfo.signInReady && !s.msClientId) {
+        toast('Sign-in is not configured in this build yet. See "Advanced" below.', 'error');
+        document.getElementById('adv')?.setAttribute('open', '');
+        return;
+      }
       const dev = await safe(() => api('auth:begin'));
       if (!dev) return;
       const off = window.lumen.on('auth:done', async (r) => {
@@ -56,9 +60,8 @@ export async function renderSettings(root, params = {}) {
         ? list.map((a) => h('div.plan-item', h('div.avatar', a.name[0].toUpperCase()), h('div.grow', h('b', a.name), state.accounts.active === a.id ? h('span.chip.ok', { style: { marginLeft: '8px' } }, 'Active') : null), state.accounts.active !== a.id ? btn('Use', { cls: 'sm', onclick: async () => (await api('auth:setActive', a.id), await refreshAccounts(), draw()) }) : null, btn('Sign out', { cls: 'sm danger', onclick: async () => (await api('auth:remove', a.id), await refreshAccounts(), draw()) })))
         : [h('p.muted', { style: { marginTop: 0 } }, 'Not signed in. You need a Minecraft: Java Edition licence to play.')]),
       h('div', { style: { margin: '12px 0' } }, btn(list.length ? 'Add another account' : 'Sign in with Microsoft', { cls: 'primary', onclick: signIn })),
-      h('h2.sec', 'Application registration'),
-      setting('Client ID', 'Microsoft requires launchers to use their own registered app approved for the Minecraft API. No secret is needed. See docs/SETUP.md.', h('input.input', { value: s.msClientId, placeholder: '00000000-0000-0000-0000-000000000000', onchange: async (e) => (await set({ msClientId: e.target.value.trim() }), draw()) })),
-      !s.msClientId ? h('div.note.warn', { style: { marginTop: '12px' } }, icon('alert'), h('div', 'No client ID configured, so sign-in is unavailable.')) : null,
+      !state.appInfo.signInReady && !s.msClientId ? h('div.note.warn', { style: { marginTop: '12px' } }, icon('alert'), h('div', h('b', 'Sign-in is not set up in this build. '), 'The distributor has to register a Microsoft app once and build its client ID in (docs/SETUP.md). Until then you can paste one under Advanced.')) : null,
+      h('details#adv', { style: { marginTop: '18px' } }, h('summary.muted', { style: { cursor: 'pointer' } }, 'Advanced: use a different Microsoft app registration'), setting('Client ID', 'Only for developers. Overrides the one built into this launcher.', h('input.input', { value: s.msClientId, placeholder: state.appInfo.signInReady ? 'Using the built-in ID' : '00000000-0000-0000-0000-000000000000', onchange: async (e) => (await set({ msClientId: e.target.value.trim() }), state.appInfo.signInReady = true, draw()) }))),
     ];
   }
 
@@ -74,12 +77,20 @@ export async function renderSettings(root, params = {}) {
     ];
   }
 
+  function updateButton() {
+    const u = state.update;
+    if (u?.status === 'ready') return btn(`Restart to update to ${u.version}`, { cls: 'primary', icon: 'refresh', onclick: () => api('update:install') });
+    if (u?.status === 'downloading') return btn(`Downloading ${u.version} (${u.percent ?? 0}%)`, { disabled: true });
+    if (u?.status === 'unavailable') return h('span.chip', 'Updates are checked in the installed app');
+    return btn('Check for updates', { icon: 'refresh', onclick: async (e) => { const r = await safe(() => api('update:check')); toast(r?.status === 'downloading' || r?.status === 'ready' ? `Update ${r.version} found.` : 'You are on the latest version.', r?.status === 'downloading' || r?.status === 'ready' ? 'ok' : ''); draw(); } });
+  }
+
   function about() {
     const i = state.appInfo;
     return [
       h('h2.sec', 'Lumen Client'),
       h('div.kv', ...[['Version', i.version], ['Data folder', i.root], ['Secret storage', i.safeStorage ? 'OS keychain (encrypted)' : 'Unavailable on this system']].flatMap(([k, v]) => [h('div.k', k), h('div', String(v ?? ''))])),
-      h('div.row.wrap', { style: { marginTop: '16px' } }, btn('Open logs folder', { icon: 'folder', onclick: () => api('shell:openLogs') }), btn('GitHub', { icon: 'link', onclick: () => api('shell:openExternal', 'https://github.com/saberapexyt-commits/lumen-client') })),
+      h('div.row.wrap', { style: { marginTop: '16px' } }, updateButton(), btn('Open logs folder', { icon: 'folder', onclick: () => api('shell:openLogs') }), btn('GitHub', { icon: 'link', onclick: () => api('shell:openExternal', 'https://github.com/saberapexyt-commits/lumen-client') })),
       h('p.muted.small', { style: { marginTop: '18px' } }, 'Lumen Client is not affiliated with Mojang, Microsoft, CurseForge or Modrinth. Minecraft is a trademark of Mojang AB.'),
     ];
   }

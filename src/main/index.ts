@@ -13,6 +13,7 @@ import * as mods from './mods/manager';
 import * as modpack from './modpack';
 import * as options from './options';
 import { QUICK_OPTIONS } from './options';
+import { checkNow, getUpdateState, initUpdater, installNow } from './updater';
 
 const log = logger('main');
 let win: BrowserWindow | null = null;
@@ -60,7 +61,9 @@ const openExternalSafe = (url: string) => {
 type Handler = (...args: any[]) => Promise<unknown> | unknown;
 
 const handlers: Record<string, Handler> = {
-  'app:info': () => ({ version: app.getVersion(), root: getRoot(), platform: process.platform, safeStorage: safeStorage.isEncryptionAvailable() }),
+  'app:info': async () => ({ version: app.getVersion(), root: getRoot(), platform: process.platform, safeStorage: safeStorage.isEncryptionAvailable(), signInReady: await auth.hasClientId(), update: getUpdateState() }),
+  'update:check': () => checkNow(),
+  'update:install': () => installNow(),
 
   /* settings */
   'settings:get': async () => {
@@ -305,25 +308,6 @@ async function screenshotTour(dir: string) {
   app.quit();
 }
 
-/** Packaged builds check GitHub Releases for a newer version and install it on next quit. */
-function checkForUpdates() {
-  if (!app.isPackaged) return;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { autoUpdater } = require('electron-updater');
-    autoUpdater.logger = null;
-    autoUpdater.on('update-available', (i: any) => log.info(`Update ${i.version} available, downloading`));
-    autoUpdater.on('update-downloaded', (i: any) => {
-      log.info(`Update ${i.version} downloaded; installs on quit`);
-      send('log:line', `Update ${i.version} ready - it installs when you close the launcher.`);
-    });
-    autoUpdater.on('error', (e: Error) => log.warn('Update check failed', e));
-    void autoUpdater.checkForUpdates();
-  } catch (e) {
-    log.warn('Updater unavailable', e as Error);
-  }
-}
-
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();
 else {
@@ -340,7 +324,7 @@ else {
     onLog((line) => send('log:line', line));
     registerIpc();
     createWindow();
-    checkForUpdates();
+    initUpdater((u) => send('update:state', u));
     log.info(`Lumen Client ${app.getVersion()} started; data in ${getRoot()}`);
   });
   app.on('window-all-closed', () => {

@@ -25,6 +25,7 @@ export function navigate(id, params) {
   localStorage.setItem('page', page);
   cleanup?.();
   cleanup = null;
+  document.body.classList.toggle('home', page === 'home');
   view.replaceChildren();
   view.scrollTop = 0;
   const result = PAGES.find((x) => x.id === page).render(view, params || {});
@@ -43,6 +44,7 @@ function renderSidebar() {
     h('div.brand', h('img', { src: 'assets/logo-mark.png', alt: '' }), h('div', h('b', 'LUMEN'), h('small', 'CLIENT'))),
     ...GROUPS.flatMap((g) => [h('div.nav-label', g.label), ...g.pages.map(navBtn)]),
     h('div.nav-spacer'),
+    updateCard(),
     h(
       'button.acct',
       { onclick: () => navigate('settings', { tab: 'accounts' }), title: acc ? `Signed in as ${acc.name}` : 'Sign in with Microsoft' },
@@ -51,6 +53,14 @@ function renderSidebar() {
     ),
     navBtn(SETTINGS),
   );
+}
+
+function updateCard() {
+  const u = state.update;
+  if (!u || !['downloading', 'ready'].includes(u.status)) return null;
+  if (u.status === 'ready')
+    return h('div.update', h('b', `Update ${u.version} ready`), h('span.muted', 'Installs in a few seconds and reopens.'), h('button.btn.primary.sm', { onclick: () => api('update:install') }, icon('refresh'), h('span', 'Restart to update')));
+  return h('div.update', h('b', `Downloading ${u.version}`), h('span.muted', `${u.percent ?? 0}%`), h('div.bar', h('i', { style: { width: (u.percent ?? 0) + '%' } })));
 }
 
 export async function refreshAccounts() {
@@ -110,6 +120,13 @@ window.lumen.on('game:log', ({ profileId, line, stream }) => {
   if (arr.length > 3000) arr.splice(0, 500);
   window.dispatchEvent(new CustomEvent('gamelog', { detail: { profileId, line, stream } }));
 });
+window.lumen.on('update:state', (u) => {
+  const was = state.update?.status;
+  state.update = u;
+  renderSidebar();
+  emit();
+  if (u.status === 'ready' && was !== 'ready') toast(`Update ${u.version} is ready. Use "Restart to update" in the sidebar.`, 'ok');
+});
 const maxBtn = document.getElementById('win-max');
 window.lumen.on('window:state', ({ maximized }) => {
   maxBtn.innerHTML = maximized
@@ -126,6 +143,7 @@ document.getElementById('win-close').onclick = () => window.lumen.window.close()
   const status = document.getElementById('splash-status');
   status.textContent = 'LOADING SETTINGS';
   state.appInfo = (await safe(() => api('app:info'), { quiet: true })) || {};
+  state.update = state.appInfo.update;
   await refreshSettings();
   status.textContent = 'CHECKING ACCOUNT';
   await refreshAccounts();
