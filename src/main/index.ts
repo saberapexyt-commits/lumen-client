@@ -23,6 +23,17 @@ let win: BrowserWindow | null = null;
 const tasks = new Map<string, Task>();
 let pendingLogin: AbortController | null = null;
 
+/** Native file dialogs on a frameless Windows window can leave it without keyboard focus; hand it back afterwards. */
+async function openDialog(options: Electron.OpenDialogOptions) {
+  const r = await dialog.showOpenDialog(win!, options);
+  if (win && !win.isDestroyed()) {
+    win.blur();
+    win.focus();
+    win.webContents.focus();
+  }
+  return r;
+}
+
 const send = (channel: string, payload: unknown) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
 };
@@ -172,7 +183,7 @@ const handlers: Record<string, Handler> = {
   /* resource packs, shaders, modpacks */
   'skins:list': () => skins.listSkins(),
   'skins:importFile': async (model: skins.SkinModel) => {
-    const r = await dialog.showOpenDialog(win!, { title: 'Import a skin', properties: ['openFile'], filters: [{ name: 'Skin (PNG)', extensions: ['png'] }] });
+    const r = await openDialog({ title: 'Import a skin', properties: ['openFile'], filters: [{ name: 'Skin (PNG)', extensions: ['png'] }] });
     if (r.canceled || !r.filePaths[0]) return null;
     return skins.addSkinFile(r.filePaths[0], model === 'slim' ? 'slim' : 'classic');
   },
@@ -197,7 +208,7 @@ const handlers: Record<string, Handler> = {
     }),
   'packs:openFolder': async (profileId: string, type: content.PackType) => void (await shell.openPath(ensureDir(content.packDir(profileId, type)))),
   'packs:addFiles': async (profileId: string, type: content.PackType) => {
-    const r = await dialog.showOpenDialog(win!, { title: 'Add pack files', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Packs', extensions: ['zip'] }] });
+    const r = await openDialog({ title: 'Add pack files', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Packs', extensions: ['zip'] }] });
     if (r.canceled) return null;
     const dir = ensureDir(content.packDir(profileId, type));
     const added: string[] = [];
@@ -230,11 +241,11 @@ const handlers: Record<string, Handler> = {
   'mods:performancePack': (profileId: string) => startTask('Installing performance pack', (t) => mods.installPerformancePack(profileId, t)),
   'mods:diagnose': (profileId: string) => mods.diagnose(profileId),
   'mods:importFiles': async (profileId: string) => {
-    const r = await dialog.showOpenDialog(win!, { title: 'Add mod files', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Mods', extensions: ['jar'] }] });
+    const r = await openDialog({ title: 'Add mod files', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Mods', extensions: ['jar'] }] });
     return r.canceled ? null : mods.importJars(profileId, r.filePaths);
   },
   'mods:importFolder': async (profileId: string) => {
-    const r = await dialog.showOpenDialog(win!, { title: 'Import all mods from a folder', properties: ['openDirectory'] });
+    const r = await openDialog({ title: 'Import all mods from a folder', properties: ['openDirectory'] });
     return r.canceled ? null : mods.importFolder(profileId, r.filePaths[0]);
   },
   'mods:openFolder': async (profileId: string) => void (await shell.openPath(ensureDir(P.modsDir(profileId)))),
@@ -242,7 +253,7 @@ const handlers: Record<string, Handler> = {
 
   /* modpacks & backups */
   'packs:import': async () => {
-    const r = await dialog.showOpenDialog(win!, { title: 'Import modpack', properties: ['openFile'], filters: [{ name: 'Modpacks', extensions: ['mrpack', 'zip'] }] });
+    const r = await openDialog({ title: 'Import modpack', properties: ['openFile'], filters: [{ name: 'Modpacks', extensions: ['mrpack', 'zip'] }] });
     if (r.canceled) return null;
     return startTask('Importing modpack', (t) => modpack.importModpack(r.filePaths[0], t));
   },

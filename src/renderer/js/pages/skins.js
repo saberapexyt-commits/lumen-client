@@ -316,7 +316,7 @@ export async function renderSkins(root) {
       actions: [(close) => btn('Cancel', { onclick: close }), (close) => btn('Add skin', { cls: 'primary', onclick: () => go(close) })],
     });
     input.onkeydown = (e) => e.key === 'Enter' && go(m.close);
-    setTimeout(() => input.focus(), 30);
+    setTimeout(() => (window.focus(), input.focus()), 60);
   }
 
   await refresh();

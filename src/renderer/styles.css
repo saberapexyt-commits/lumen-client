@@ -340,6 +340,7 @@ body.home #bg-dim { background: linear-gradient(180deg, rgba(8, 10, 14, 0.15), r
 /* ---------- skins ---------- */
 .sk-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
 @media (max-width: 1000px) { .sk-layout { grid-template-columns: 1fr; } }
+.sk-grid > .empty { grid-column: 1 / -1; }
 .sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; }
 .sk-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); cursor: pointer; transition: border-color .15s, transform .15s, background .15s; min-width: 0; }
 .sk-card:hover { border-color: var(--line2); background: var(--raised); transform: translateY(-1px); }
