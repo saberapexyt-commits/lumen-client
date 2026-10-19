@@ -1,0 +1,16 @@
+{
+  "id": "survival",
+  "name": "Fabric Survival",
+  "color": "#2f8fe8",
+  "mcVersion": "1.21.1",
+  "loader": "fabric",
+  "loaderVersion": "0.19.5",
+  "jvmPreset": "default",
+  "jvmArgs": "",
+  "javaPath": "",
+  "fullscreen": false,
+  "notes": "",
+  "createdAt": 1792385433846,
+  "playTimeMs": 147600000,
+  "lastPlayed": 1792370896369
+}

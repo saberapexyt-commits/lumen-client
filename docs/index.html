@@ -1,20 +1,124 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lumen Client</title><link rel="stylesheet" href="site.css"></head>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumen Client - Minecraft launcher with a built-in mod manager</title>
+<meta name="description" content="Lumen Client is a Minecraft: Java Edition launcher with a built-in Modrinth and CurseForge mod manager that picks the right version and loader for you.">
+<link rel="icon" href="assets/logo-mark.png">
+<link rel="stylesheet" href="site.css">
+</head>
 <body>
-<header><img src="assets/logo-mark.png" alt=""><b>LUMEN</b><nav><a href="./">Home</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="https://github.com/saberapexyt-commits/lumen-client">GitHub</a></nav></header>
-<main>
-<div class="hero"><img src="assets/logo-full.png" alt="Lumen Client"></div>
-<p style="text-align:center" class="muted">A Minecraft: Java Edition launcher with a built-in CurseForge and Modrinth mod manager.</p>
-<p style="text-align:center"><a class="btn" href="https://github.com/saberapexyt-commits/lumen-client/releases/latest">Download for Windows</a><a class="btn alt" href="https://github.com/saberapexyt-commits/lumen-client">Source code</a></p>
-<h2>What it does</h2>
-<ul>
-<li>Separate profiles with their own Minecraft version, loader (Fabric, Quilt, Forge, NeoForge), mods and worlds.</li>
-<li>Searches Modrinth and CurseForge and installs only mod files that match your Minecraft version and loader, with their required dependencies.</li>
-<li>Signs you in through Microsoft's official sign-in page. Lumen never sees your password.</li>
-<li>Open source. Game files are downloaded straight from Mojang's servers to your computer.</li>
-</ul>
-<h2>Legal</h2>
-<p><a href="terms.html">Terms of Service</a> &middot; <a href="privacy.html">Privacy Policy</a></p>
-</main>
-<footer>Lumen Client is not affiliated with, endorsed by, or associated with Mojang Studios, Microsoft, CurseForge or Modrinth. Minecraft is a trademark of Mojang AB.</footer>
-</body></html>
+
+<header class="nav"><div class="in">
+  <a class="brand" href="./"><img src="assets/logo-mark.png" alt="">LUMEN</a>
+  <nav class="links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/saberapexyt-commits/lumen-client">GitHub</a>
+    <a class="cta" href="https://github.com/saberapexyt-commits/lumen-client/releases/latest">Download</a>
+  </nav>
+</div></header>
+
+<div class="hero"><div>
+  <img class="logo" src="assets/logo-full.png" alt="Lumen Client">
+  <h1>Pick your version. Search mods. They just work.</h1>
+  <p>A Minecraft launcher that finds the right mod file for your version and loader, and installs its dependencies for you.</p>
+  <a class="btn primary" href="https://github.com/saberapexyt-commits/lumen-client/releases/latest">Download for Windows</a><a class="btn ghost" href="https://github.com/saberapexyt-commits/lumen-client">View source</a>
+  <div class="note">Free and open source &middot; Windows 10/11 &middot; Requires Minecraft: Java Edition</div>
+</div></div>
+
+<section id="features"><div class="wrap">
+  <div class="eyebrow">Mod manager</div>
+  <h2>Stop guessing which file to download</h2>
+  <p class="lead">Search Modrinth and CurseForge from inside the launcher. Lumen only offers files that explicitly support your Minecraft version and mod loader.</p>
+
+  <div class="feature">
+    <div>
+      <h3>The right version, every time</h3>
+      <p>The newest release of a mod is often built for a different Minecraft version. Lumen never assumes. It checks the exact version and loader of your profile before it installs anything.</p>
+      <ul>
+        <li>Fabric, Quilt, Forge and NeoForge</li>
+        <li>Required dependencies added automatically, optional ones only if you tick them</li>
+        <li>Warnings for conflicts, and for mods that need a manual download</li>
+        <li>Pick a different version yourself when you want to</li>
+      </ul>
+    </div>
+    <div class="window"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+      <div class="tag">Installing for 1.21.1 &middot; Fabric</div>
+      <div class="row"><div class="ic">MM</div><div><b>Mod Menu</b><span class="s">requested</span></div><span class="chip acc">Mod</span></div>
+      <div class="row"><div class="ic">FA</div><div><b>Fabric API</b><span class="s">required by Mod Menu</span></div><span class="chip">Dependency</span></div>
+      <div class="row"><div class="ic">TP</div><div><b>Text Placeholder API</b><span class="s">required by Mod Menu</span></div><span class="chip">Dependency</span></div>
+    </div></div>
+  </div>
+
+  <div class="feature flip">
+    <div>
+      <h3>Profiles that never touch each other</h3>
+      <p>Keep a vanilla setup, a PvP setup and a big modpack side by side. Each profile has its own Minecraft version, loader, mods, configs and worlds.</p>
+      <ul>
+        <li>Enable, disable, update and remove mods without hunting for jar files</li>
+        <li>Removed mods go to a trash folder, never silently deleted</li>
+        <li>Import Modrinth and CurseForge modpacks, export and back up your own</li>
+        <li>A health check flags missing dependencies and wrong-loader mods</li>
+      </ul>
+    </div>
+    <div class="window"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+      <div class="row"><div class="ic" style="background:#2f8fe8;color:#fff">F</div><div><b>Fabric Survival</b><span class="s">1.21.1 &middot; Fabric</span></div><span class="chip ok">Ready</span></div>
+      <div class="row"><div class="ic" style="background:#e5a82b;color:#fff">P</div><div><b>PvP</b><span class="s">1.20.1 &middot; Fabric</span></div></div>
+      <div class="row"><div class="ic" style="background:#4cb871;color:#fff">V</div><div><b>Vanilla</b><span class="s">1.21.1</span></div></div>
+    </div></div>
+  </div>
+
+  <div class="feature">
+    <div>
+      <h3>Reliable by design</h3>
+      <p>Every download is checked against its checksum. Installs are staged first, so a failed download never leaves you with half a mod. You can cancel and retry at any point.</p>
+      <ul>
+        <li>Game files and Java come straight from Mojang. You never install Java yourself</li>
+        <li>Clear error messages and a live console for the game output</li>
+        <li>Updates arrive inside the launcher and install silently</li>
+      </ul>
+    </div>
+    <div class="window"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+      <div class="row"><div class="ic">1</div><div><b>Downloading mods</b><span class="s">checksum verified</span></div><span class="chip ok">Done</span></div>
+      <div class="row"><div class="ic">2</div><div><b>Downloading libraries</b><span class="s">resumes if interrupted</span></div><span class="chip ok">Done</span></div>
+      <div class="row"><div class="ic">3</div><div><b>Launching Minecraft</b><span class="s">with your own account</span></div><span class="chip acc">Play</span></div>
+    </div></div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <div class="eyebrow">How it works</div>
+  <h2>Three steps to a modded game</h2>
+  <p class="lead">No digging through websites and folders.</p>
+  <div class="steps">
+    <div><div class="n">01</div><b>Make a profile</b><span>Choose a Minecraft version and a loader. Lumen checks the loader supports that version before it creates anything.</span></div>
+    <div><div class="n">02</div><b>Find your mods</b><span>Search Modrinth or CurseForge. Review exactly what will be installed, including dependencies.</span></div>
+    <div><div class="n">03</div><b>Press Play</b><span>Lumen downloads what is missing and starts the game with your Microsoft account.</span></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap faq">
+  <div class="eyebrow">FAQ</div>
+  <h2>Good to know</h2>
+  <p class="lead">Straight answers, including the limits.</p>
+  <details><summary>Do I need to own Minecraft?</summary><p>Yes. Lumen signs in with the Microsoft account that owns Minecraft: Java Edition. It does not provide the game or any way around buying it.</p></details>
+  <details><summary>Is my Microsoft password safe?</summary><p>Lumen never sees it. You sign in on Microsoft's own page, and the launcher keeps only an encrypted sign-in token on your PC. See the <a href="privacy.html">Privacy Policy</a>.</p></details>
+  <details><summary>Is it affiliated with Minecraft, Modrinth or CurseForge?</summary><p>No. It is an independent project. Mods are downloaded through the official Modrinth and CurseForge APIs and stay under their authors' licences. Authors who disable third-party downloads are respected, and you are pointed to the source instead.</p></details>
+  <details><summary>Does it have a FPS counter, HUD or in-game overlay?</summary><p>Not yet. Those have to run inside Minecraft, so they need a companion mod, which is planned but not built. Today you get a one-click performance pack of existing open-source mods, JVM presets and quick FPS and render-distance settings.</p></details>
+  <details><summary>Which platforms are supported?</summary><p>Windows 10 and 11 right now. The code is written to be portable, but only Windows has been tested.</p></details>
+</div></section>
+
+<div class="cta-band">
+  <h2>Ready to play?</h2>
+  <a class="btn primary" href="https://github.com/saberapexyt-commits/lumen-client/releases/latest">Download Lumen Client</a>
+</div>
+
+<footer>
+  <div><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a><a href="https://github.com/saberapexyt-commits/lumen-client">GitHub</a><a href="https://github.com/saberapexyt-commits/lumen-client/issues">Support</a></div>
+  <p>Lumen Client is not affiliated with, endorsed by, or associated with Mojang Studios, Microsoft, CurseForge or Modrinth. Minecraft is a trademark of Mojang AB.</p>
+</footer>
+</body>
+</html>
