@@ -19,7 +19,7 @@ public class CameraMixin {
             && Minecraft.getInstance().gui.screen() == null;
         BehaviourModules.Zoom.progress += ((zooming ? 1.0F : 0.0F) - BehaviourModules.Zoom.progress) * 0.25F;
         if (BehaviourModules.Zoom.progress > 0.001F) {
-            cir.setReturnValue(cir.getReturnValue() * (1.0F - 0.75F * BehaviourModules.Zoom.progress));
+            cir.setReturnValue(cir.getReturnValue() * (1.0F - (1.0F - BehaviourModules.Zoom.factor) * BehaviourModules.Zoom.progress));
         }
     }
 }

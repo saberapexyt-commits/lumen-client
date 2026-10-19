@@ -14,6 +14,7 @@ import * as mods from './mods/manager';
 import * as content from './mods/content';
 import * as modpack from './modpack';
 import * as options from './options';
+import * as skins from './skins';
 import { QUICK_OPTIONS } from './options';
 import { checkNow, getUpdateState, initUpdater, installNow } from './updater';
 
@@ -169,6 +170,18 @@ const handlers: Record<string, Handler> = {
     }),
 
   /* resource packs, shaders, modpacks */
+  'skins:list': () => skins.listSkins(),
+  'skins:importFile': async (model: skins.SkinModel) => {
+    const r = await dialog.showOpenDialog(win!, { title: 'Import a skin', properties: ['openFile'], filters: [{ name: 'Skin (PNG)', extensions: ['png'] }] });
+    if (r.canceled || !r.filePaths[0]) return null;
+    return skins.addSkinFile(r.filePaths[0], model === 'slim' ? 'slim' : 'classic');
+  },
+  'skins:addByName': (username: string) => skins.addSkinByName(String(username)),
+  'skins:remove': async (id: string) => (await skins.removeSkin(String(id)), { removed: true }),
+  'skins:update': async (id: string, patch: { name?: string; model?: skins.SkinModel }) => (await skins.updateSkin(String(id), patch || {}), { ok: true }),
+  'skins:account': () => skins.accountSkins(),
+  'skins:apply': async (id: string) => (await skins.applySkin(String(id)), { applied: true }),
+  'skins:setCape': async (capeId: string | null) => (await skins.setCape(capeId ? String(capeId) : null), { ok: true }),
   'packs:list': (profileId: string, type: content.PackType) => content.listPacks(profileId, type),
   'packs:toggle': (profileId: string, key: string, enabled: boolean) => content.setPackEnabled(profileId, key, enabled),
   'packs:remove': async (profileId: string, key: string) => (await content.removePack(profileId, key), { removed: true }),

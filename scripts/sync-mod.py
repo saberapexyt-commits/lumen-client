@@ -11,7 +11,7 @@ import os
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mod')
 BASE = 'src/main/java/dev/lumen/client/'
 SHARED = [
-    'LumenConfig.java',
+    'LumenConfig.java', 'ClickGuiModel.java',
     'module/ArmorModule.java', 'module/BehaviourModules.java', 'module/CpsTracker.java', 'module/KeystrokesModule.java',
     'module/LumenModule.java', 'module/ModuleManager.java', 'module/ModuleState.java', 'module/Modules.java', 'module/TextModule.java',
 ]
@@ -28,6 +28,7 @@ RENAMES_263 = [
     ('pose.pushPose();\n        pose.translate(x, y, 0);\n        pose.scale(m.state().scale, m.state().scale, 1.0F);\n        m.render(g, mc);\n        pose.popPose();',
      'pose.pushMatrix();\n        pose.translate((float) x, (float) y);\n        pose.scale(m.state().scale, m.state().scale);\n        m.render(g, mc);\n        pose.popMatrix();'),
     ('mc.screen != null', 'mc.gui.screen() != null'),
+    ('mc.level.getDayTime()', 'mc.level.getOverworldClockTime()'),  # 26.x replaced day time with a clock manager
 ]
 
 

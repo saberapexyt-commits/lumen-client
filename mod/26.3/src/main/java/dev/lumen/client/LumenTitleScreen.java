@@ -121,7 +121,7 @@ public class LumenTitleScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(g, mouseX, mouseY, partialTick); // background, then widgets
 
-        String version = "Minecraft " + SharedConstants.getCurrentVersion().name() + "  |  Lumen Client";
+        String version = "Minecraft " + SharedConstants.getCurrentVersion().name() + "  |  Lumen Client " + LumenClient.VERSION;
         g.text(this.font, version, PAD, this.height - 14, 0xFF8D93A8, false);
 
         if (LumenConfig.get().quickJoin) {

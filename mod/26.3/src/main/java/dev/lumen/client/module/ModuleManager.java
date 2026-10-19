@@ -7,6 +7,7 @@ import java.util.List;
 
 public final class ModuleManager {
     public static final BehaviourModules.Zoom ZOOM = new BehaviourModules.Zoom();
+    public static final BehaviourModules.Fullbright FULLBRIGHT = new BehaviourModules.Fullbright();
 
     public static final List<LumenModule> ALL = List.of(
         new Modules.Fps(),
@@ -18,8 +19,12 @@ public final class ModuleManager {
         new Modules.Clock(),
         new Modules.Memory(),
         new Modules.Speed(),
+        new Modules.Day(),
+        new Modules.Food(),
+        new Modules.Rotation(),
         new BehaviourModules.ToggleSprint(),
-        ZOOM
+        ZOOM,
+        FULLBRIGHT
     );
 
     private ModuleManager() {}
@@ -50,6 +55,11 @@ public final class ModuleManager {
         pose.scale(m.state().scale, m.state().scale);
         m.render(g, mc);
         pose.popMatrix();
+    }
+
+    /** Called when the game closes so temporary changes (like fullbright's brightness) are never saved. */
+    public static void shutdown(Minecraft mc) {
+        FULLBRIGHT.restore(mc);
     }
 
     public static void tick(Minecraft mc) {

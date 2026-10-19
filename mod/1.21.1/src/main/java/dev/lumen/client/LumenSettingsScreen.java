@@ -1,25 +1,14 @@
 package dev.lumen.client;
 
-import dev.lumen.client.module.LumenModule;
-import dev.lumen.client.module.ModuleManager;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-
-/** The Lumen mods menu (Right Shift): every module with an ON/OFF switch and its own options. */
+/** The Lumen menu (Right Shift): draggable panels of modules. All logic lives in {@link ClickGuiModel}. */
 public class LumenSettingsScreen extends Screen {
     private final Screen parent;
-    private ModList list;
+    private ClickGuiModel model;
 
     public LumenSettingsScreen(Screen parent) {
         super(Component.literal("Lumen"));
@@ -28,145 +17,99 @@ public class LumenSettingsScreen extends Screen {
 
     @Override
     protected void init() {
-        list = new ModList(minecraft, this.width, this.height - 32 - 56, 56, 34);
-        for (LumenModule m : ModuleManager.ALL) list.add(new ModEntry(m));
-        list.add(new ToggleEntry("Custom main menu", "Replace the vanilla title screen with the Lumen menu.", () -> LumenConfig.get().customMenu, v -> LumenConfig.get().customMenu = v));
-        list.add(new ToggleEntry("Quick join list", "Show your saved servers as one-click buttons on the Lumen menu.", () -> LumenConfig.get().quickJoin, v -> LumenConfig.get().quickJoin = v));
-        addRenderableWidget(list);
-
-        int bw = 150, y = this.height - 26;
-        addRenderableWidget(UiButton.of(Component.literal("Edit HUD Layout"), b -> minecraft.setScreen(new HudEditorScreen(this)), this.width / 2 - bw - 4, y, bw, 20));
-        addRenderableWidget(UiButton.of(Component.literal("Done"), b -> onClose(), this.width / 2 + 4, y, bw, 20));
+        if (model == null) model = new ClickGuiModel();
+        model.layout(this.width, this.height);
     }
 
+    private static ClickGuiModel.Painter painter(GuiGraphics g, Font font) {
+        return new ClickGuiModel.Painter() {
+            @Override
+            public void fill(int x1, int y1, int x2, int y2, int argb) {
+                g.fill(x1, y1, x2, y2, argb);
+            }
+
+            @Override
+            public void text(String s, int x, int y, int argb) {
+                g.drawString(font, s, x, y, argb, true);
+            }
+
+            @Override
+            public int width(String s) {
+                return font.width(s);
+            }
+
+            @Override
+            public int lineHeight() {
+                return font.lineHeight;
+            }
+        };
+    }
+
+    /** Everything is drawn by the model, so skip Minecraft's own (resource-pack-styled) menu background. */
     @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        UiButton.background(g, minecraft, this.width, this.height);
-    }
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {}
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        super.render(g, mouseX, mouseY, partialTick);
-        g.drawCenteredString(this.font, Component.literal("LUMEN"), this.width / 2, 16, 0xFF3DB8FF);
-        g.drawCenteredString(this.font, Component.literal("Mods"), this.width / 2, 30, 0xFFB8BFCC);
-        int on = 0;
-        for (LumenModule m : ModuleManager.ALL) if (m.enabled()) on++;
-        g.drawCenteredString(this.font, Component.literal(on + " of " + ModuleManager.ALL.size() + " enabled"), this.width / 2, 42, 0xFF8D93A8);
+        if (minecraft.level == null) UiButton.background(g, minecraft, this.width, this.height);
+        model.render(painter(g, this.font), mouseX, mouseY, System.currentTimeMillis());
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        switch (model.mouseClicked(mx, my, button)) {
+            case HUD_EDITOR -> minecraft.setScreen(new HudEditorScreen(this));
+            case CLOSE -> onClose();
+            default -> { }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        model.mouseDragged(mx, my);
+        return true;
+    }
+
+    @Override
+    public boolean mouseReleased(double mx, double my, int button) {
+        model.mouseReleased();
+        return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+        model.mouseScrolled(mx, my, scrollY);
+        return true;
+    }
+
+    @Override
+    public boolean charTyped(char c, int modifiers) {
+        model.charTyped(c);
+        return true;
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scan, int modifiers) {
+        if (key == 259) { // backspace
+            model.backspace();
+            return true;
+        }
+        if (key == 256 && model.hasSearch()) { // escape clears the search first
+            model.clearSearch();
+            return true;
+        }
+        return super.keyPressed(key, scan, modifiers);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     @Override
     public void onClose() {
         LumenConfig.get().save();
         minecraft.setScreen(parent);
-    }
-
-    /* ---------- list ---------- */
-    private static final class ModList extends ContainerObjectSelectionList<LEntry> {
-        ModList(Minecraft mc, int width, int height, int y, int itemHeight) {
-            super(mc, width, height, y, itemHeight);
-        }
-
-        void add(LEntry e) {
-            addEntry(e);
-        }
-
-        // no vanilla list textures: a resource pack must not restyle this screen
-        @Override
-        protected void renderListBackground(GuiGraphics g) {}
-
-        @Override
-        protected void renderListSeparators(GuiGraphics g) {}
-
-        @Override
-        public int getRowWidth() {
-            return Math.min(420, this.width - 24);
-        }
-
-        @Override
-        protected int getScrollbarPosition() {
-            return this.width / 2 + getRowWidth() / 2 + 8;
-        }
-    }
-
-    private abstract static class LEntry extends ContainerObjectSelectionList.Entry<LEntry> {
-        protected final Button toggle;
-        protected final String name, desc;
-
-        LEntry(String name, String desc, BooleanSupplier get, Consumer<Boolean> set) {
-            this.name = name;
-            this.desc = desc;
-            this.toggle = UiButton.of(label(get.getAsBoolean()), b -> {
-                set.accept(!get.getAsBoolean());
-                b.setMessage(label(get.getAsBoolean()));
-            }, 0, 0, 44, 20);
-        }
-
-        static Component label(boolean on) {
-            return Component.literal(on ? "ON" : "OFF").withStyle(s -> s.withColor(on ? 0x4CD98A : 0x9AA3B2));
-        }
-
-        protected void renderText(GuiGraphics g, Minecraft mc, int top, int left, int width, int height, int reserved) {
-            g.drawString(mc.font, name, left + 4, top + 5, 0xFFFFFFFF, false);
-            String d = mc.font.plainSubstrByWidth(desc, width - reserved - 10);
-            g.drawString(mc.font, d, left + 4, top + 18, 0xFF8D93A8, false);
-        }
-
-        List<AbstractWidget> widgets() {
-            return List.of(toggle);
-        }
-
-        @Override
-        public List<? extends GuiEventListener> children() {
-            return widgets();
-        }
-
-        @Override
-        public List<? extends NarratableEntry> narratables() {
-            return widgets();
-        }
-    }
-
-    private static final class ToggleEntry extends LEntry {
-        ToggleEntry(String name, String desc, BooleanSupplier get, Consumer<Boolean> set) {
-            super(name, desc, get, set);
-        }
-
-        @Override
-        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mx, int my, boolean hovered, float pt) {
-            renderText(g, Minecraft.getInstance(), top, left, width, height, 52);
-            toggle.setX(left + width - 48);
-            toggle.setY(top + 7);
-            toggle.render(g, mx, my, pt);
-        }
-    }
-
-    private final class ModEntry extends LEntry {
-        private final LumenModule module;
-        private final Button options;
-
-        ModEntry(LumenModule m) {
-            super(m.name, m.description, m::enabled, m::setEnabled);
-            this.module = m;
-            this.options = UiButton.of(Component.literal("Options"), b -> minecraft.setScreen(new ModuleOptionsScreen(LumenSettingsScreen.this, m)), 0, 0, 54, 20);
-        }
-
-        @Override
-        List<AbstractWidget> widgets() {
-            return module.isHud() ? List.of(toggle, options) : List.of(toggle);
-        }
-
-        @Override
-        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mx, int my, boolean hovered, float pt) {
-            int reserved = module.isHud() ? 112 : 52;
-            renderText(g, Minecraft.getInstance(), top, left, width, height, reserved);
-            toggle.setX(left + width - 48);
-            toggle.setY(top + 7);
-            toggle.render(g, mx, my, pt);
-            if (module.isHud()) {
-                options.setX(left + width - 48 - 58);
-                options.setY(top + 7);
-                options.render(g, mx, my, pt);
-            }
-        }
     }
 }

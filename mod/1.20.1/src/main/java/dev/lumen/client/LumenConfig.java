@@ -22,6 +22,8 @@ public final class LumenConfig {
     public boolean quickJoin = true;
     /** Per-module settings, keyed by module id. */
     public Map<String, ModuleState> modules = new HashMap<>();
+    /** Positions of the Lumen menu panels as fractions of the screen: title -> {x, y}. */
+    public Map<String, float[]> panels = new HashMap<>();
 
     private static Path file() {
         return FabricLoader.getInstance().getConfigDir().resolve("lumen-client.json");
@@ -37,6 +39,7 @@ public final class LumenConfig {
             }
             instance = loaded != null ? loaded : new LumenConfig();
             if (instance.modules == null) instance.modules = new HashMap<>();
+            if (instance.panels == null) instance.panels = new HashMap<>();
         }
         return instance;
     }

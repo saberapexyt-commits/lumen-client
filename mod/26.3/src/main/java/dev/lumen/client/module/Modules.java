@@ -82,6 +82,11 @@ public final class Modules {
         }
 
         @Override
+        public String category() {
+            return "Info";
+        }
+
+        @Override
         protected String text(Minecraft mc) {
             Runtime rt = Runtime.getRuntime();
             long used = (rt.totalMemory() - rt.freeMemory()) >> 20;
@@ -97,6 +102,11 @@ public final class Modules {
 
         public Speed() {
             super("speed", "Speed", "How fast you are moving, in blocks per second.", false, 0.01F, 0.38F);
+        }
+
+        @Override
+        public String category() {
+            return "Info";
         }
 
         @Override
@@ -118,4 +128,58 @@ public final class Modules {
             return String.format(Locale.ROOT, "Speed: %.1f b/s", bps);
         }
     }
+
+    public static final class Day extends TextModule {
+        public Day() {
+            super("day", "Day Counter", "Which in-game day you are on.", false, 0.01F, 0.44F);
+        }
+
+        @Override
+        public String category() {
+            return "Info";
+        }
+
+        @Override
+        protected String text(Minecraft mc) {
+            return mc.level == null ? "Day -" : "Day " + (mc.level.getOverworldClockTime() / 24000L + 1);
+        }
+    }
+
+    public static final class Food extends TextModule {
+        public Food() {
+            super("food", "Hunger", "Food level and saturation.", false, 0.01F, 0.50F);
+        }
+
+        @Override
+        public String category() {
+            return "Info";
+        }
+
+        @Override
+        protected String text(Minecraft mc) {
+            LocalPlayer p = mc.player;
+            if (p == null) return "Food: -";
+            return String.format(Locale.ROOT, "Food: %d  Sat: %.1f", p.getFoodData().getFoodLevel(), p.getFoodData().getSaturationLevel());
+        }
+    }
+
+    public static final class Rotation extends TextModule {
+        public Rotation() {
+            super("rotation", "Rotation", "Which way you are looking (yaw and pitch).", false, 0.01F, 0.56F);
+        }
+
+        @Override
+        public String category() {
+            return "Info";
+        }
+
+        @Override
+        protected String text(Minecraft mc) {
+            LocalPlayer p = mc.player;
+            if (p == null) return "Yaw/Pitch: -";
+            float yaw = ((p.getYRot() % 360F) + 360F) % 360F;
+            return String.format(Locale.ROOT, "Yaw %.0f  Pitch %.0f", yaw, p.getXRot());
+        }
+    }
 }
+

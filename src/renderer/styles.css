@@ -336,3 +336,31 @@ body.home #bg-dim { background: linear-gradient(180deg, rgba(8, 10, 14, 0.15), r
 .update .bar { margin-top: 6px; }
 .update .btn { width: 100%; margin-top: 8px; }
 @media (max-width: 1040px) { .update { padding: 6px; } .update b, .update span, .update .bar { display: none; } .update .btn span { display: none; } }
+
+/* ---------- skins ---------- */
+.sk-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .sk-layout { grid-template-columns: 1fr; } }
+.sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; }
+.sk-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); cursor: pointer; transition: border-color .15s, transform .15s, background .15s; min-width: 0; }
+.sk-card:hover { border-color: var(--line2); background: var(--raised); transform: translateY(-1px); }
+.sk-card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.sk-card b { font-size: 12.5px; font-weight: 600; max-width: 100%; }
+.sk-card span { font-size: 11px; color: var(--dim); }
+.sk-thumb { image-rendering: pixelated; width: 80px; height: 160px; }
+.sk-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 0; }
+.sk-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.sk-stage { height: 400px; display: flex; align-items: center; justify-content: center; perspective: 1100px; cursor: grab; border-radius: 10px; background: radial-gradient(ellipse at 50% 85%, rgba(61,184,255,.16), transparent 65%), var(--raised); user-select: none; touch-action: none; }
+.sk-stage:active { cursor: grabbing; }
+.sk3d { position: relative; transform-style: preserve-3d; }
+.sk3d-rig { position: absolute; inset: 0; transform-style: preserve-3d; }
+.sk3d-box { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.sk3d-face { position: absolute; background-size: 100% 100%; image-rendering: pixelated; backface-visibility: hidden; }
+.fl { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--dim); }
+.seg { display: flex; gap: 4px; background: var(--raised); border-radius: 9px; padding: 3px; }
+.seg button { flex: 1; border: 0; background: transparent; color: var(--dim); padding: 6px 8px; border-radius: 7px; font-size: 12px; cursor: pointer; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.sk-capes { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+.sk-cape { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text); font-size: 11px; cursor: pointer; min-width: 0; }
+.sk-cape.on { border-color: var(--accent); }
+.sk-cape .cp { width: 40px; height: 64px; background-size: 640% 200%; background-position: 1.85% 6.25%; image-rendering: pixelated; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: var(--faint); }
+.sk-cape .cp.none { background: var(--panel); background-image: none; }

@@ -43,6 +43,11 @@ public abstract class LumenModule {
         state().scale = 1.0F;
     }
 
+    /** Which panel of the Lumen menu the module appears in. */
+    public String category() {
+        return isHud() ? "HUD" : "Gameplay";
+    }
+
     /** Whether the module has a background box the player can switch on or off. */
     public boolean supportsBackground() {
         return true;

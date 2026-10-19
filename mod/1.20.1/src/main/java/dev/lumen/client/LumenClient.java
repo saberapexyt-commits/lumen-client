@@ -3,6 +3,7 @@ package dev.lumen.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.lumen.client.module.ModuleManager;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -22,6 +23,9 @@ public class LumenClient implements ClientModInitializer {
     public static final String MOD_ID = "lumen";
     public static final Logger LOGGER = LoggerFactory.getLogger("LumenClient");
 
+    /** The mod build shown on the main menu, so it is easy to tell which build is installed. */
+    public static String VERSION = "?";
+
     public static KeyMapping settingsKey;
     public static KeyMapping zoomKey;
     private static String debugStage = "";
@@ -29,6 +33,7 @@ public class LumenClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        VERSION = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("lumen_client").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
         LumenConfig.get();
         settingsKey = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("key.lumen.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, "key.categories.lumen"));
@@ -49,6 +54,8 @@ public class LumenClient implements ClientModInitializer {
             ModuleManager.tick(client);
             debugHooks(client);
         });
+
+        ClientLifecycleEvents.CLIENT_STOPPING.register(ModuleManager::shutdown);
 
         // A "Lumen" shortcut on the pause menu, and on the vanilla title screen when the custom menu is switched off.
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {

@@ -20,7 +20,7 @@ public class GameRendererMixin {
             && Minecraft.getInstance().screen == null;
         BehaviourModules.Zoom.progress += ((zooming ? 1.0F : 0.0F) - BehaviourModules.Zoom.progress) * 0.25F;
         if (BehaviourModules.Zoom.progress > 0.001F) {
-            cir.setReturnValue(cir.getReturnValue() * (1.0 - 0.75 * BehaviourModules.Zoom.progress));
+            cir.setReturnValue(cir.getReturnValue() * (1.0 - (1.0 - BehaviourModules.Zoom.factor) * BehaviourModules.Zoom.progress));
         }
     }
 }

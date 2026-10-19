@@ -113,7 +113,7 @@ public class LumenTitleScreen extends Screen {
         g.blit(logoTexture, logoX, logoY, logoW, logoH, 0, 0, logoTexW, logoTexH, logoTexW, logoTexH);
         super.render(g, mouseX, mouseY, partialTick);
 
-        String version = "Minecraft " + SharedConstants.getCurrentVersion().getName() + "  |  Lumen Client";
+        String version = "Minecraft " + SharedConstants.getCurrentVersion().getName() + "  |  Lumen Client " + LumenClient.VERSION;
         g.drawString(this.font, version, PAD, this.height - 14, 0xFF8D93A8, false);
 
         if (LumenConfig.get().quickJoin) {

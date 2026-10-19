@@ -6,11 +6,12 @@ import { renderInstalled } from './pages/installed.js';
 import { renderSettings } from './pages/settings.js';
 import { renderConsole } from './pages/console.js';
 import { renderClient } from './pages/client.js';
+import { renderSkins } from './pages/skins.js';
 
 const GROUPS = [
   { label: 'Play', pages: [{ id: 'home', label: 'Home', icon: 'home', render: renderHome }, { id: 'profiles', label: 'Profiles', icon: 'gamepad', render: renderProfiles }] },
   { label: 'Mods', pages: [{ id: 'browse', label: 'Browse', icon: 'search', render: renderBrowse }, { id: 'installed', label: 'Installed', icon: 'layers', render: renderInstalled }] },
-  { label: 'Client', pages: [{ id: 'client', label: 'Features', icon: 'spark', render: renderClient }, { id: 'console', label: 'Console', icon: 'terminal', render: renderConsole }] },
+  { label: 'Client', pages: [{ id: 'skins', label: 'Skins', icon: 'user', render: renderSkins }, { id: 'client', label: 'Features', icon: 'spark', render: renderClient }, { id: 'console', label: 'Console', icon: 'terminal', render: renderConsole }] },
 ];
 const SETTINGS = { id: 'settings', label: 'Settings', icon: 'settings', render: renderSettings };
 const PAGES = [...GROUPS.flatMap((g) => g.pages), SETTINGS];
