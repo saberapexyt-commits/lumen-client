@@ -210,7 +210,9 @@ export async function openProfileDialog(existing) {
 async function openProfileMore(p) {
   const presets = (await safe(() => api('profiles:presets'))) || [];
   const opts = await safe(() => api('options:get', p.id));
-  const d = { jvmPreset: p.jvmPreset, jvmArgs: p.jvmArgs, javaPath: p.javaPath, width: p.width || '', height: p.height || '', fullscreen: p.fullscreen, notes: p.notes };
+  const tri = (v) => (v === undefined || v === null ? '' : v ? 'on' : 'off');
+  const fromTri = (v) => (v === 'on' ? true : v === 'off' ? false : undefined);
+  const d = { useLumenMod: tri(p.useLumenMod), useLumenTheme: tri(p.useLumenTheme), jvmPreset: p.jvmPreset, jvmArgs: p.jvmArgs, javaPath: p.javaPath, width: p.width || '', height: p.height || '', fullscreen: p.fullscreen, notes: p.notes };
   const q = {};
   const quick = opts
     ? Object.entries(opts.spec).map(([k, s]) => {
@@ -225,6 +227,10 @@ async function openProfileMore(p) {
 
   const body = h(
     'div',
+    h('h2.sec', 'Lumen features for this profile'),
+    h('label.field', h('span', `In-game mod (menu, HUD, zoom...) - default is ${state.settings.lumenMod ? 'on' : 'off'}`), h('select.input', { onchange: (e) => (d.useLumenMod = e.target.value) }, [['', 'Use the default'], ['on', 'Always on'], ['off', 'Off for this profile']].map(([v, l]) => h('option', { value: v, selected: v === d.useLumenMod }, l)))),
+    h('label.field', h('span', `Menu theme (resource pack) - default is ${state.settings.lumenTheme ? 'on' : 'off'}`), h('select.input', { onchange: (e) => (d.useLumenTheme = e.target.value) }, [['', 'Use the default'], ['on', 'Always on'], ['off', 'Off for this profile']].map(([v, l]) => h('option', { value: v, selected: v === d.useLumenTheme }, l)))),
+    h('h2.sec', 'Game'),
     h('label.field', h('span', 'JVM preset'), h('select.input', { onchange: (e) => (d.jvmPreset = e.target.value) }, presets.map((x) => h('option', { value: x.id, selected: x.id === d.jvmPreset }, x.name)))),
     h('label.field', h('span', 'Extra JVM arguments'), h('input.input', { value: d.jvmArgs, placeholder: '-XX:+UseStringDeduplication', oninput: (e) => (d.jvmArgs = e.target.value) })),
     h('label.field', h('span', 'Custom Java path (blank = automatic Mojang runtime)'), h('input.input', { value: d.javaPath, oninput: (e) => (d.javaPath = e.target.value) })),
@@ -264,7 +270,7 @@ async function openProfileMore(p) {
         btn('Save', {
           cls: 'primary',
           onclick: async () => {
-            const patch = { ...d, width: d.width ? +d.width : undefined, height: d.height ? +d.height : undefined };
+            const patch = { ...d, useLumenMod: fromTri(d.useLumenMod), useLumenTheme: fromTri(d.useLumenTheme), width: d.width ? +d.width : undefined, height: d.height ? +d.height : undefined };
             const ok = await safe(() => api('profiles:update', p.id, patch));
             if (ok && Object.keys(q).length) await safe(() => api('options:set', p.id, q));
             if (ok) { close(); await refreshProfiles(); toast('Saved.', 'ok'); }

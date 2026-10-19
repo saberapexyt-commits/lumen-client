@@ -21,10 +21,10 @@ public class HudEditorScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(Button.builder(Component.literal("Reset all"), b -> {
+        addRenderableWidget(UiButton.of(Component.literal("Reset all"), b -> {
             for (LumenModule m : ModuleManager.ALL) if (m.isHud()) m.resetPosition();
-        }).bounds(this.width / 2 - 104, this.height - 28, 100, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(this.width / 2 + 4, this.height - 28, 100, 20).build());
+        }, this.width / 2 - 104, this.height - 28, 100, 20));
+        addRenderableWidget(UiButton.of(Component.literal("Done"), b -> onClose(), this.width / 2 + 4, this.height - 28, 100, 20));
     }
 
     @Override

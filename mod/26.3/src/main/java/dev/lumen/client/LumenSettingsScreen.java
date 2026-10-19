@@ -35,10 +35,13 @@ public class LumenSettingsScreen extends Screen {
         addRenderableWidget(list);
 
         int bw = 150, y = this.height - 26;
-        addRenderableWidget(Button.builder(Component.literal("Edit HUD Layout"), b -> minecraft.setScreenAndShow(new HudEditorScreen(this)))
-            .bounds(this.width / 2 - bw - 4, y, bw, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
-            .bounds(this.width / 2 + 4, y, bw, 20).build());
+        addRenderableWidget(UiButton.of(Component.literal("Edit HUD Layout"), b -> minecraft.setScreenAndShow(new HudEditorScreen(this)), this.width / 2 - bw - 4, y, bw, 20));
+        addRenderableWidget(UiButton.of(Component.literal("Done"), b -> onClose(), this.width / 2 + 4, y, bw, 20));
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        UiButton.background(g, minecraft, this.width, this.height);
     }
 
     @Override
@@ -67,6 +70,13 @@ public class LumenSettingsScreen extends Screen {
             addEntry(e);
         }
 
+        // no vanilla list textures: a resource pack must not restyle this screen
+        @Override
+        protected void extractListBackground(GuiGraphicsExtractor g) {}
+
+        @Override
+        protected void extractListSeparators(GuiGraphicsExtractor g) {}
+
         @Override
         public int getRowWidth() {
             return Math.min(420, this.width - 24);
@@ -74,16 +84,16 @@ public class LumenSettingsScreen extends Screen {
     }
 
     private abstract static class LEntry extends ContainerObjectSelectionList.Entry<LEntry> {
-        protected final Button toggle;
+        protected final AbstractWidget toggle;
         protected final String name, desc;
 
         LEntry(String name, String desc, BooleanSupplier get, Consumer<Boolean> set) {
             this.name = name;
             this.desc = desc;
-            this.toggle = Button.builder(label(get.getAsBoolean()), b -> {
+            this.toggle = UiButton.of(label(get.getAsBoolean()), b -> {
                 set.accept(!get.getAsBoolean());
                 b.setMessage(label(get.getAsBoolean()));
-            }).bounds(0, 0, 44, 20).build();
+            }, 0, 0, 44, 20);
         }
 
         static Component label(boolean on) {
@@ -128,13 +138,12 @@ public class LumenSettingsScreen extends Screen {
 
     private final class ModEntry extends LEntry {
         private final LumenModule module;
-        private final Button options;
+        private final AbstractWidget options;
 
         ModEntry(LumenModule m) {
             super(m.name, m.description, m::enabled, m::setEnabled);
             this.module = m;
-            this.options = Button.builder(Component.literal("Options"), b -> minecraft.setScreenAndShow(new ModuleOptionsScreen(LumenSettingsScreen.this, m)))
-                .bounds(0, 0, 54, 20).build();
+            this.options = UiButton.of(Component.literal("Options"), b -> minecraft.setScreenAndShow(new ModuleOptionsScreen(LumenSettingsScreen.this, m)), 0, 0, 54, 20);
         }
 
         @Override

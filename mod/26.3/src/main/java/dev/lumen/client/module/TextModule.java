@@ -32,6 +32,6 @@ public abstract class TextModule extends LumenModule {
     @Override
     public void render(GuiGraphicsExtractor g, Minecraft mc) {
         if (state().background) g.fill(0, 0, width(mc), height(mc), 0x90000000);
-        g.text(mc.font, text(mc), PAD, PAD, color(), true);
+        g.text(mc.font, text(mc), PAD, PAD, color(), state().shadow);
     }
 }

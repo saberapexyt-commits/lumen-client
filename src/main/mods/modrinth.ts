@@ -1,6 +1,6 @@
 import { getJson, postJson } from '../net';
 import { LauncherError } from '../logger';
-import { Category, ModDependency, ModFile, ModLoader, ModProject, ModProvider, SearchQuery } from './types';
+import { Category, ContentType, ModDependency, ModFile, ModLoader, ModProject, ModProvider, SearchQuery } from './types';
 
 /**
  * Modrinth API v2 (https://docs.modrinth.com/api/). No key required, but a descriptive
@@ -16,6 +16,7 @@ export function loaderFamily(loader: ModLoader): string[] {
 function projectFromHit(h: any): ModProject {
   return {
     provider: 'modrinth',
+    type: (['mod', 'resourcepack', 'shader', 'modpack'].includes(h.project_type) ? h.project_type : 'mod') as ContentType,
     id: h.project_id ?? h.id,
     slug: h.slug,
     title: h.title,
@@ -25,7 +26,7 @@ function projectFromHit(h: any): ModProject {
     downloads: h.downloads ?? 0,
     follows: h.follows ?? h.followers,
     categories: h.display_categories ?? h.categories ?? [],
-    url: `https://modrinth.com/mod/${h.slug}`,
+    url: `https://modrinth.com/${['resourcepack', 'shader', 'modpack'].includes(h.project_type) ? h.project_type : 'mod'}/${h.slug}`,
     updated: h.date_modified ?? h.updated,
     gameVersions: h.versions ?? h.game_versions,
     clientSide: h.client_side,
@@ -70,9 +71,12 @@ export const modrinth: ModProvider = {
   },
 
   async search(query: SearchQuery) {
-    const facets: string[][] = [['project_type:mod']];
-    if (query.mcVersion) facets.push([`versions:${query.mcVersion}`]);
-    if (query.loader) facets.push(loaderFamily(query.loader).map((l) => `categories:${l}`));
+    const type = query.type ?? 'mod';
+    const facets: string[][] = [[`project_type:${type}`]];
+    if (query.mcVersion && type !== 'modpack') facets.push([`versions:${query.mcVersion}`]);
+    // Loaders only matter for mods. Shader packs are filtered to ones the Iris/Oculus loaders can run.
+    if (query.loader && type === 'mod') facets.push(loaderFamily(query.loader).map((l) => `categories:${l}`));
+    if (type === 'shader') facets.push(['categories:iris']);
     if (query.category) facets.push([`categories:${query.category}`]);
     const url = `${API}/search?query=${q(query.query)}&facets=${q(JSON.stringify(facets))}&index=${query.sort}&offset=${query.offset}&limit=${query.limit}`;
     const r = await getJson<{ hits: any[]; total_hits: number }>(url, { ttl: 60_000 });
@@ -102,10 +106,10 @@ export const modrinth: ModProvider = {
     return fileFromVersion(await getJson(`${API}/version/${q(fileId)}`, { ttl: 120_000 }));
   },
 
-  async getCategories(): Promise<Category[]> {
+  async getCategories(type: ContentType = 'mod'): Promise<Category[]> {
     const cats = await getJson<{ name: string; project_type: string; header: string }[]>(`${API}/tag/category`, { ttl: 3600_000 });
     return cats
-      .filter((c) => c.project_type === 'mod' && c.header === 'categories')
+      .filter((c) => c.project_type === type && c.header === 'categories')
       .map((c) => ({ id: c.name, name: c.name.replace(/(^|-)(\w)/g, (_m, a, b) => (a ? ' ' : '') + b.toUpperCase()) }));
   },
 

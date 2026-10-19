@@ -15,7 +15,7 @@ export function themeZip(): string {
 }
 
 /** Insert or remove `entry` in options.txt's resourcePacks list, leaving every other line untouched. */
-export function setPackEntry(optionsText: string, entry: string, enabled: boolean): string {
+export function setPackEntry(optionsText: string, entry: string, enabled: boolean, position: 'low' | 'high' = 'low'): string {
   const lines = optionsText ? optionsText.split(/\r?\n/) : [];
   const i = lines.findIndex((l) => l.startsWith('resourcePacks:'));
   let list: string[] = ['vanilla'];
@@ -27,7 +27,11 @@ export function setPackEntry(optionsText: string, entry: string, enabled: boolea
     }
   }
   list = list.filter((x) => x !== entry);
-  if (enabled) list.push(entry); // later entries have higher priority
+  // Later entries win. Lumen's pack goes right after vanilla (lowest priority) so a player's own packs always override it.
+  if (enabled) {
+    if (position === 'high') list.push(entry);
+    else list.splice(Math.min(1, list.length), 0, entry);
+  }
   const line = `resourcePacks:${JSON.stringify(list)}`;
   if (i >= 0) lines[i] = line;
   else lines.push(line);

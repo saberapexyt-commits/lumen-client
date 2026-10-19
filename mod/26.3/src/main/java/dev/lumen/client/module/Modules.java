@@ -75,4 +75,47 @@ public final class Modules {
             return LocalTime.now().format(FORMAT);
         }
     }
+
+    public static final class Memory extends TextModule {
+        public Memory() {
+            super("memory", "Memory", "Java memory in use / available to the game.", false, 0.01F, 0.32F);
+        }
+
+        @Override
+        protected String text(Minecraft mc) {
+            Runtime rt = Runtime.getRuntime();
+            long used = (rt.totalMemory() - rt.freeMemory()) >> 20;
+            return "Mem: " + used + " / " + (rt.maxMemory() >> 20) + " MB";
+        }
+    }
+
+    /** Horizontal speed in blocks per second, measured between client ticks. */
+    public static final class Speed extends TextModule {
+        private double lastX, lastZ;
+        private long lastTime;
+        private double bps;
+
+        public Speed() {
+            super("speed", "Speed", "How fast you are moving, in blocks per second.", false, 0.01F, 0.38F);
+        }
+
+        @Override
+        protected String text(Minecraft mc) {
+            LocalPlayer p = mc.player;
+            if (p == null) return "Speed: -";
+            long now = System.nanoTime();
+            if (lastTime != 0 && now - lastTime > 50_000_000L) { // refresh about 20 times per second
+                double dt = (now - lastTime) / 1.0e9;
+                bps = Math.hypot(p.getX() - lastX, p.getZ() - lastZ) / dt;
+                lastX = p.getX();
+                lastZ = p.getZ();
+                lastTime = now;
+            } else if (lastTime == 0) {
+                lastX = p.getX();
+                lastZ = p.getZ();
+                lastTime = now;
+            }
+            return String.format(Locale.ROOT, "Speed: %.1f b/s", bps);
+        }
+    }
 }

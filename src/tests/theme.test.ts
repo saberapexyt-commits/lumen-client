@@ -4,9 +4,9 @@ import { setPackEntry } from '../main/theme';
 
 const E = 'file/Lumen Theme.zip';
 
-test('adds the theme after existing packs and keeps other options', () => {
+test('puts the theme right after vanilla so the players own packs override it, and keeps other options', () => {
   const out = setPackEntry('fov:0.5\nresourcePacks:["vanilla","file/Faithful.zip"]\nmaxFps:120\n', E, true);
-  assert.match(out, /resourcePacks:\["vanilla","file\/Faithful.zip","file\/Lumen Theme.zip"\]/);
+  assert.match(out, /resourcePacks:\["vanilla","file\/Lumen Theme.zip","file\/Faithful.zip"\]/);
   assert.match(out, /fov:0.5/);
   assert.match(out, /maxFps:120/);
 });

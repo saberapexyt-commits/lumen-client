@@ -31,7 +31,8 @@ npm start
 | Checksum verification, cancel, retry with backoff, atomic file writes, staged installs | ✅ |
 | Performance pack (curated optimisation mods, resolved per profile), JVM presets, options.txt quick settings, themes | ✅ |
 | Lumen menu theme: restyles the Minecraft title screen (background, logo, buttons, splash text) through a resource pack added to each profile; verified on 1.21.1 and 26.3 | ✅ |
-| Lumen in-game mod (Fabric/Quilt, Minecraft 1.20.1, 1.21.1, 26.3): custom main menu with saved-server quick join, a mods menu (Right Shift) with FPS, CPS, coordinates, ping, clock, keystrokes, armor status, toggle sprint and zoom (hold C), plus a drag-to-position HUD editor. Built in `mod/<version>/`, bundled and installed per profile | ✅ run in the real game |
+| Lumen in-game mod (Fabric/Quilt, Minecraft 1.20.1, 1.21.1, 26.3): custom main menu with saved-server quick join, a mods menu (Right Shift) with FPS, CPS, coordinates, ping, clock, memory, speed, keystrokes, armor status, toggle sprint and zoom (hold C), with per-module size, colour, background and text shadow; Lumen's own screens ignore resource packs, plus a drag-to-position HUD editor. Built in `mod/<version>/`, bundled and installed per profile | ✅ run in the real game |
+| Resource packs, shader packs and modpacks (Modrinth + CurseForge): browse, install, enable, update, remove. Shaders auto-install Iris (Oculus on Forge) with the matching Sodium build; modpacks become new profiles | ✅ tested live on Modrinth (shader loaded in game); CurseForge untested |
 | HUD (FPS/CPS/keystrokes), more overlays, keybind UI | 🟡 **Planned** - to be added to the in-game mod; shown as planned in the app, not faked |
 
 ## Testing

@@ -43,6 +43,7 @@ const drawing = `
   { const c = mk(512, 512); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + sky + ')'; g.fillRect(0, 0, 512, 512); png('mod_pan_4', c); }
   { const c = mk(S, S); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + ground + ')'; g.fillRect(0, 0, S, S); png('panorama_5', c); }
   { const c = mk(512, 512); const g = c.getContext('2d'); g.fillStyle = 'rgb(' + ground + ')'; g.fillRect(0, 0, 512, 512); png('mod_pan_5', c); }
+  { const c = mk(1600, 900); const g = c.getContext('2d'); g.filter = 'blur(5px) saturate(1.1) brightness(0.8)'; const sc = Math.max(1600 / bg.width, 900 / bg.height); g.drawImage(bg, (1600 - bg.width * sc) / 2, (900 - bg.height * sc) / 2, bg.width * sc, bg.height * sc); png('mod_bg', c); }
   { const c = mk(256, 144); const g = c.getContext('2d');
     const r = g.createRadialGradient(128, 72, 40, 128, 72, 150); r.addColorStop(0, 'rgba(6,9,14,0.18)'); r.addColorStop(1, 'rgba(6,9,14,0.72)');
     g.fillStyle = r; g.fillRect(0, 0, 256, 144); png('panorama_overlay', c); }
@@ -98,14 +99,14 @@ const drawing = `
     g.drawImage(t, wd.x, wd.y, wd.w, wd.h, x0 + ew + gap, (VIS - wd.h * kw2) / 2 - 4, ww, wd.h * kw2);
     wordCenterX = x0 + ew + gap + ww / 2;
     {
-      const MW = 1000, MH = 420, m = 10;
+      const MW = 2000, MH = 840, m = 20;
       const ke3 = (MH - 2 * m) / em.h;
       const kw3 = Math.min(ke3 * 1.02, (MH - 2 * m) / wd.h * 0.94);
-      let a = em.w * ke3, b = wd.w * kw3; const sh = Math.min(1, (MW - 2 * m - 14) / (a + 14 + b)); a *= sh; b *= sh;
+      let a = em.w * ke3, b = wd.w * kw3; const sh = Math.min(1, (MW - 2 * m - 28) / (a + 28 + b)); a *= sh; b *= sh;
       const mc = mk(MW, MH); const mg = mc.getContext('2d'); mg.imageSmoothingQuality = 'high';
-      const ox = (MW - (a + 14 + b)) / 2;
+      const ox = (MW - (a + 28 + b)) / 2;
       mg.drawImage(t, em.x, em.y, em.w, em.h, ox, (MH - em.h * ke3 * sh) / 2, a, em.h * ke3 * sh);
-      mg.drawImage(t, wd.x, wd.y, wd.w, wd.h, ox + a + 14, (MH - wd.h * kw3 * sh) / 2, b, wd.h * kw3 * sh);
+      mg.drawImage(t, wd.x, wd.y, wd.w, wd.h, ox + a + 28, (MH - wd.h * kw3 * sh) / 2, b, wd.h * kw3 * sh);
       png('lumen_logo', mc);
     }
   }
@@ -189,6 +190,9 @@ app.whenReady().then(async () => {
   const put = (rel, b) => { const f = path.join(modRes, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); };
   for (let i = 0; i < 6; i++) put(`lumen/textures/gui/panorama/panorama_${i}.png`, buf('mod_pan_' + i));
   put('lumen/textures/gui/logo.png', buf('lumen_logo'));
+  put('lumen/textures/gui/logo.png.mcmeta', Buffer.from(JSON.stringify({ texture: { blur: true } })));
+  put('lumen/textures/gui/background.png', buf('mod_bg'));
+  put('lumen/textures/gui/background.png.mcmeta', Buffer.from(JSON.stringify({ texture: { blur: true } })));
   put('lumen/icon.png', buf('pack'));
   for (const b of ['button', 'button_highlighted', 'button_disabled']) {
     put(`minecraft/textures/gui/sprites/widget/${b}.png`, buf(b));

@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
  * The layout adapts to the GUI scale, so it also fits small windows / large GUI scales.
  */
 public class LumenTitleScreen extends Screen {
-    private static final int LOGO_W = 1000, LOGO_H = 420; // texture size of lumen:textures/gui/logo.png
+    private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
     private static final ResourceLocation LOGO = ResourceLocation.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo.png");
     private static final CubeMap CUBE_MAP = new CubeMap(ResourceLocation.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/panorama/panorama"));
     private static final int ACCENT = 0xFF3DB8FF;
@@ -54,21 +54,15 @@ public class LumenTitleScreen extends Screen {
         logoY = Math.max(PAD, (y0 - logoH) / 2);
 
         int y = y0;
-        addRenderableWidget(Button.builder(Component.translatable("menu.singleplayer"), b -> minecraft.setScreen(new SelectWorldScreen(this)))
-            .bounds(PAD, y, bw, bh).build());
+        addRenderableWidget(UiButton.of(Component.translatable("menu.singleplayer"), b -> minecraft.setScreen(new SelectWorldScreen(this)), PAD, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.translatable("menu.multiplayer"), b -> minecraft.setScreen(new JoinMultiplayerScreen(this)))
-            .bounds(PAD, y, bw, bh).build());
+        addRenderableWidget(UiButton.of(Component.translatable("menu.multiplayer"), b -> minecraft.setScreen(new JoinMultiplayerScreen(this)), PAD, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.literal("Realms"), b -> minecraft.setScreen(new RealmsMainScreen(this)))
-            .bounds(PAD, y, half, bh).build());
-        addRenderableWidget(Button.builder(Component.translatable("menu.options"), b -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)))
-            .bounds(PAD + half + gap, y, half, bh).build());
+        addRenderableWidget(UiButton.of(Component.literal("Realms"), b -> minecraft.setScreen(new RealmsMainScreen(this)), PAD, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.options"), b -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), PAD + half + gap, y, half, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.literal("Lumen"), b -> minecraft.setScreen(new LumenSettingsScreen(this)))
-            .bounds(PAD, y, half, bh).build());
-        addRenderableWidget(Button.builder(Component.translatable("menu.quit"), b -> minecraft.stop())
-            .bounds(PAD + half + gap, y, half, bh).build());
+        addRenderableWidget(UiButton.of(Component.literal("Lumen"), b -> minecraft.setScreen(new LumenSettingsScreen(this)), PAD, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.quit"), b -> minecraft.stop(), PAD + half + gap, y, half, bh));
 
         servers = new ServerList(minecraft);
         servers.load();
@@ -78,8 +72,7 @@ public class LumenTitleScreen extends Screen {
             int shown = Math.min(Math.max(0, (this.height - 52 - PAD) / (bh + gap)), Math.min(6, servers.size()));
             for (int i = 0; i < shown && rw > 80; i++) {
                 ServerData data = servers.get(i);
-                addRenderableWidget(Button.builder(Component.literal(data.name), b -> join(data))
-                    .bounds(rx, 40 + i * (bh + gap), rw, bh).build());
+                addRenderableWidget(UiButton.of(Component.literal(data.name), b -> join(data), rx, 40 + i * (bh + gap), rw, bh));
             }
         }
     }

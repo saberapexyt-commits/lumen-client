@@ -60,8 +60,8 @@ export async function prepareProfile(profileId: string, task: Task): Promise<Pre
   } else if (!fs.existsSync(javaPath)) {
     throw new LauncherError(`The custom Java path does not exist: ${javaPath}`);
   }
-  await applyTheme(profile.id, settings.lumenTheme);
-  await syncLumenMod(profile, settings.lumenMod, task);
+  await applyTheme(profile.id, profile.useLumenTheme ?? settings.lumenTheme);
+  await syncLumenMod(profile, profile.useLumenMod ?? settings.lumenMod, task);
   return { profile, versionId, javaPath, resolved };
 }
 

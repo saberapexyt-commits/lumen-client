@@ -24,6 +24,9 @@ export interface Profile {
   width?: number;
   height?: number;
   fullscreen: boolean;
+  /** Per-profile override of the global setting; undefined = follow Settings. */
+  useLumenMod?: boolean;
+  useLumenTheme?: boolean;
   notes: string;
   createdAt: number;
   lastPlayed?: number;

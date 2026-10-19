@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell, Menu } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 import { P, ensureDir, getRoot } from './paths';
 import { LauncherError, CancelledError, friendlyError, logger, onLog, recentLogs } from './logger';
 import { Task, getJson, randomId } from './net';
@@ -10,6 +11,7 @@ import { LOADERS, LoaderId, getLoaderVersions } from './loaders';
 import * as profiles from './profiles';
 import * as game from './game';
 import * as mods from './mods/manager';
+import * as content from './mods/content';
 import * as modpack from './modpack';
 import * as options from './options';
 import { QUICK_OPTIONS } from './options';
@@ -152,18 +154,50 @@ const handlers: Record<string, Handler> = {
     curseforge: await mods.providers.curseforge.status(),
   }),
   'mods:search': async (provider: 'modrinth' | 'curseforge', q: any) => mods.providers[provider].search(q),
-  'mods:categories': (provider: 'modrinth' | 'curseforge') => mods.providers[provider].getCategories(),
+  'mods:categories': (provider: 'modrinth' | 'curseforge', type?: any) => mods.providers[provider].getCategories(type),
   'mods:project': (provider: 'modrinth' | 'curseforge', id: string) => mods.providers[provider].getProject(id),
   'mods:versions': (profileId: string, provider: 'modrinth' | 'curseforge', projectId: string) => mods.listVersions(profileId, provider, projectId),
-  'mods:plan': (profileId: string, req: any) => mods.planMod(profileId, req),
+  'mods:plan': (profileId: string, req: any) => (req.type === 'resourcepack' || req.type === 'shader' ? content.planPack(profileId, req) : mods.planMod(profileId, req)),
   // The renderer only says *what* to install; the main process re-plans, so file URLs never come from the UI.
   'mods:install': (profileId: string, req: any, optional: any[] = []) =>
-    startTask('Installing mods', async (t) => {
+    startTask(req.type === 'shader' ? 'Installing shader' : req.type === 'resourcepack' ? 'Installing resource pack' : 'Installing mods', async (t) => {
       t.stage('Resolving compatible files');
-      const plan = await mods.planMod(profileId, req);
+      const isPack = req.type === 'resourcepack' || req.type === 'shader';
+      const plan = isPack ? await content.planPack(profileId, req) : await mods.planMod(profileId, req);
       if (plan.blockers.length && !req.ignoreBlockers) throw new LauncherError(plan.blockers.join('\n'));
-      return mods.installPlan(profileId, plan, t, optional);
+      return isPack ? content.installPacks(profileId, plan, t) : mods.installPlan(profileId, plan, t, optional);
     }),
+
+  /* resource packs, shaders, modpacks */
+  'packs:list': (profileId: string, type: content.PackType) => content.listPacks(profileId, type),
+  'packs:toggle': (profileId: string, key: string, enabled: boolean) => content.setPackEnabled(profileId, key, enabled),
+  'packs:remove': async (profileId: string, key: string) => (await content.removePack(profileId, key), { removed: true }),
+  'packs:checkUpdates': (profileId: string, type: content.PackType) => content.checkPackUpdates(profileId, type),
+  'packs:update': (profileId: string, keys: string[]) =>
+    startTask('Updating packs', async (t) => {
+      const done: string[] = [];
+      for (const k of keys) {
+        t.throwIfCancelled();
+        done.push(...(await content.updatePack(profileId, k, t)).installed);
+      }
+      return { installed: done, skipped: [] };
+    }),
+  'packs:openFolder': async (profileId: string, type: content.PackType) => void (await shell.openPath(ensureDir(content.packDir(profileId, type)))),
+  'packs:addFiles': async (profileId: string, type: content.PackType) => {
+    const r = await dialog.showOpenDialog(win!, { title: 'Add pack files', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Packs', extensions: ['zip'] }] });
+    if (r.canceled) return null;
+    const dir = ensureDir(content.packDir(profileId, type));
+    const added: string[] = [];
+    for (const f of r.filePaths) {
+      const name = path.basename(f);
+      if (!fs.existsSync(path.join(dir, name))) {
+        fs.copyFileSync(f, path.join(dir, name));
+        added.push(name);
+      }
+    }
+    return { added, skipped: r.filePaths.length - added.length };
+  },
+  'modpack:install': (provider: 'modrinth' | 'curseforge', projectId: string, fileId?: string) => startTask('Installing modpack', (t) => content.installModpackFromProject(provider, projectId, fileId, t)),
   'mods:list': (profileId: string) => mods.listInstalled(profileId),
   'mods:count': (profileId: string) => mods.countMods(profileId),
   'mods:toggle': (profileId: string, key: string, enabled: boolean) => mods.setEnabled(profileId, key, enabled),

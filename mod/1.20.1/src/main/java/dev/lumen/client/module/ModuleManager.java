@@ -16,6 +16,8 @@ public final class ModuleManager {
         new ArmorModule(),
         new Modules.Ping(),
         new Modules.Clock(),
+        new Modules.Memory(),
+        new Modules.Speed(),
         new BehaviourModules.ToggleSprint(),
         ZOOM
     );

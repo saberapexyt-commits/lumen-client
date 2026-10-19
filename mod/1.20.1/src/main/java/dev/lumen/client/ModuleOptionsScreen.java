@@ -20,7 +20,7 @@ public class ModuleOptionsScreen extends Screen {
 
     @Override
     protected void init() {
-        int w = 200, x = this.width / 2 - w / 2, y = this.height / 2 - 60;
+        int w = 200, x = this.width / 2 - w / 2, y = this.height / 2 - 72;
         addRenderableWidget(new ScaleSlider(x, y, w, module));
         y += 24;
         addRenderableWidget(UiButton.of(bgText(), b -> {
@@ -31,6 +31,11 @@ public class ModuleOptionsScreen extends Screen {
         addRenderableWidget(UiButton.of(colorText(), b -> {
             module.state().color = (module.state().color + 1) % LumenModule.COLORS.length;
             b.setMessage(colorText());
+        }, x, y, w, 20));
+        y += 24;
+        addRenderableWidget(UiButton.of(shadowText(), b -> {
+            module.state().shadow = !module.state().shadow;
+            b.setMessage(shadowText());
         }, x, y, w, 20));
         y += 24;
         addRenderableWidget(UiButton.of(Component.literal("Reset position and size"), b -> {
@@ -45,6 +50,10 @@ public class ModuleOptionsScreen extends Screen {
         return Component.literal("Background: " + (module.state().background ? "ON" : "OFF"));
     }
 
+    private Component shadowText() {
+        return Component.literal("Text shadow: " + (module.state().shadow ? "ON" : "OFF"));
+    }
+
     private Component colorText() {
         return Component.literal("Colour: " + LumenModule.COLOR_NAMES[Math.floorMod(module.state().color, LumenModule.COLORS.length)]);
     }
@@ -53,8 +62,8 @@ public class ModuleOptionsScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         UiButton.background(g, minecraft, this.width, this.height);
         super.render(g, mouseX, mouseY, partialTick);
-        g.drawCenteredString(this.font, Component.literal(module.name), this.width / 2, this.height / 2 - 92, 0xFF3DB8FF);
-        g.drawCenteredString(this.font, Component.literal("Drag it into place with Edit HUD Layout"), this.width / 2, this.height / 2 - 80, 0xFF8D93A8);
+        g.drawCenteredString(this.font, Component.literal(module.name), this.width / 2, this.height / 2 - 104, 0xFF3DB8FF);
+        g.drawCenteredString(this.font, Component.literal("Drag it into place with Edit HUD Layout"), this.width / 2, this.height / 2 - 92, 0xFF8D93A8);
     }
 
     @Override

@@ -73,7 +73,7 @@ function fakeProvider(id: ProviderId, projects: Record<string, ModProject>, file
     getCategories: async () => [],
   };
 }
-const proj = (id: string, title = id): ModProject => ({ provider: 'modrinth', id, slug: id, title, summary: '', author: '', downloads: 0, categories: [], url: '' });
+const proj = (id: string, title = id): ModProject => ({ provider: 'modrinth', type: 'mod', id, slug: id, title, summary: '', author: '', downloads: 0, categories: [], url: '' });
 
 test('plans required dependencies, lists optional ones, skips installed', async () => {
   const prov = fakeProvider(

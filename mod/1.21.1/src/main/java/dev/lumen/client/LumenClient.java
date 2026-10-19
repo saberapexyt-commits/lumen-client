@@ -54,8 +54,7 @@ public class LumenClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> {
             if (screen instanceof PauseScreen || screen instanceof TitleScreen) {
                 Screens.getButtons(screen).add(
-                    Button.builder(Component.literal("Lumen"), b -> client.setScreen(new LumenSettingsScreen(screen)))
-                        .bounds(6, 6, 56, 20).build());
+                    UiButton.of(Component.literal("Lumen"), b -> client.setScreen(new LumenSettingsScreen(screen)), 6, 6, 56, 20));
             }
         });
         LOGGER.info("Lumen Client loaded");

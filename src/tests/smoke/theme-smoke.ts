@@ -8,7 +8,8 @@ import { execFileSync } from 'child_process';
 import { setRoot, P } from '../../main/paths';
 setRoot(process.env.LUMEN_HOME || path.join(process.cwd(), '.test-home'));
 import { Task } from '../../main/net';
-import { createProfile } from '../../main/profiles';
+import { createProfile, getProfile } from '../../main/profiles';
+import { listPacks, setPackEnabled } from '../../main/mods/content';
 import { prepareProfile } from '../../main/game';
 import { launchGame } from '../../main/minecraft/launch';
 import { LoaderId } from '../../main/loaders';
@@ -17,7 +18,7 @@ async function main() {
   const mc = process.argv[2] || '1.21.1';
   const loader = (process.argv[3] || 'vanilla') as LoaderId;
   const out = path.resolve(process.argv[4] || `theme-${mc}.png`);
-  const profile = await createProfile({ name: `theme ${mc} ${Date.now()}`, mcVersion: mc, loader });
+  const profile = process.env.LUMEN_PROFILE ? await getProfile(process.env.LUMEN_PROFILE) : await createProfile({ name: `theme ${mc} ${Date.now()}`, mcVersion: mc, loader });
   const prep = await prepareProfile(profile.id, new Task('t', 't', () => {}));
   const gameDir = P.gameDir(profile.id);
   if (process.env.LUMEN_SERVERS) {
@@ -35,6 +36,18 @@ async function main() {
     for (const id of ids) modules[id] = { enabled: true, x: pos[id]?.[0] ?? 0, y: pos[id]?.[1] ?? 0, scale: 1, color: 0, background: true };
     fs.mkdirSync(path.join(gameDir, 'config'), { recursive: true });
     fs.writeFileSync(path.join(gameDir, 'config', 'lumen-client.json'), JSON.stringify({ customMenu: true, quickJoin: true, modules }));
+  }
+  if (process.env.LUMEN_TESTPACK) {
+    // enable an extra (deliberately ugly) resource pack on top of everything else
+    fs.copyFileSync(process.env.LUMEN_TESTPACK, path.join(gameDir, 'resourcepacks', 'UglyTest.zip'));
+    const opt = path.join(gameDir, 'options.txt');
+    const cur = fs.readFileSync(opt, 'utf8');
+    fs.writeFileSync(opt, cur.replace(/resourcePacks:\[(.*)\]/, (_m, inner) => `resourcePacks:[${inner},"file/UglyTest.zip"]`));
+  }
+  if (process.env.LUMEN_ENABLE_SHADER) {
+    const sh = await listPacks(profile.id, 'shader');
+    await setPackEnabled(profile.id, sh[0].key, true);
+    console.log('shader enabled:', sh[0].fileName);
   }
   console.log('options.txt:', fs.readFileSync(path.join(gameDir, 'options.txt'), 'utf8').trim());
   console.log('pack present:', fs.existsSync(path.join(gameDir, 'resourcepacks', 'Lumen Theme.zip')));

@@ -1,11 +1,11 @@
-import { api, state, h, icon, btn, safe, toast, modal, fmtNum, timeAgo, modIcon, profileSelect, currentProfile, profileLabel, waitTask, emptyState, LOADER_NAMES } from '../core.js';
+import { api, state, h, icon, btn, safe, toast, modal, confirmDialog, fmtNum, timeAgo, modIcon, profileSelect, currentProfile, profileLabel, waitTask, emptyState, refreshProfiles, selectProfile, LOADER_NAMES } from '../core.js';
 import { navigate } from '../app.js';
 
 const PAGE_SIZE = 25;
 const SORTS = [['relevance', 'Relevance'], ['downloads', 'Downloads'], ['updated', 'Recently updated'], ['newest', 'Newest']];
 
 export async function renderBrowse(root) {
-  const q = { provider: localStorage.getItem('provider') || 'modrinth', query: '', sort: 'relevance', category: '', offset: 0, matchProfile: true };
+  const q = { provider: localStorage.getItem('provider') || 'modrinth', type: localStorage.getItem('contentType') || 'mod', query: '', sort: 'relevance', category: '', offset: 0, matchProfile: true };
   let installedKeys = new Set();
   let providerStatus = {};
   let loading = false;
@@ -13,8 +13,11 @@ export async function renderBrowse(root) {
 
   const targetBar = h('div.target');
   const sourceSeg = h('div.seg');
+  const typeSeg = h('div.seg');
+  const TYPES = [['mod', 'Mods'], ['resourcepack', 'Resource packs'], ['shader', 'Shaders'], ['modpack', 'Modpacks']];
+  const typeWord = () => ({ mod: 'mods', resourcepack: 'resource packs', shader: 'shaders', modpack: 'modpacks' })[q.type];
   const sortSel = h('select.input', { style: { width: '170px' }, onchange: (e) => ((q.sort = e.target.value), run(true)) }, SORTS.map(([v, l]) => h('option', { value: v }, l)));
-  const searchIn = h('input.input', { placeholder: 'Search mods by name…', oninput: debounce((e) => ((q.query = e.target.value.trim()), run(true)), 320) });
+  const searchIn = h('input.input', { placeholder: 'Search by name…', oninput: debounce((e) => ((q.query = e.target.value.trim()), run(true)), 320) });
   const catList = h('div.catlist');
   const results = h('div.results');
   const notice = h('div');
@@ -23,6 +26,7 @@ export async function renderBrowse(root) {
   const top = h(
     'div.browse-top',
     targetBar,
+    h('div.row', { style: { marginBottom: '8px' } }, typeSeg),
     h('div.row', h('div.search.grow', icon('search'), searchIn), sourceSeg, sortSel),
     notice,
   );
@@ -31,15 +35,52 @@ export async function renderBrowse(root) {
   /* ----- header pieces ----- */
   function drawTarget() {
     const p = currentProfile();
+    if (q.type === 'modpack') {
+      targetBar.replaceChildren(h('span.ver', icon('layers', 14), 'Modpacks create a new profile'), h('span.muted', 'with their own Minecraft version, loader and mods.'));
+      return;
+    }
     targetBar.replaceChildren(
       h('span.muted', 'Installing for'),
-      p ? h('span.ver', icon('gamepad', 14), `${p.mcVersion} · ${LOADER_NAMES[p.loader]}`) : h('span.chip.warn', 'No profile'),
+      p ? h('span.ver', icon('gamepad', 14), q.type === 'mod' ? `${p.mcVersion} · ${LOADER_NAMES[p.loader]}` : `Minecraft ${p.mcVersion}`) : h('span.chip.warn', 'No profile'),
       state.profiles.length ? (() => { const sel = profileSelect(() => (drawTarget(), loadInstalled().then(() => run(true)))); sel.style.minWidth = '0'; sel.style.width = '230px'; return sel; })() : null,
       h('div.grow'),
-      h('label.row.small.muted', { title: "Hide mods that have no release for this profile's Minecraft version and loader" }, h('input', { type: 'checkbox', checked: q.matchProfile, onchange: (e) => ((q.matchProfile = e.target.checked), run(true)) }), 'Compatible only'),
+      h('label.row.small.muted', { title: "Hide anything that has no release for this profile's Minecraft version (and loader, for mods)" }, h('input', { type: 'checkbox', checked: q.matchProfile, onchange: (e) => ((q.matchProfile = e.target.checked), run(true)) }), 'Compatible only'),
     );
     top.querySelector('.target select')?.classList.add('sm');
   }
+  function drawType() {
+    typeSeg.replaceChildren(
+      ...TYPES.map(([id, label]) =>
+        h('button' + (q.type === id ? '.on' : ''), {
+          onclick: async () => {
+            q.type = id;
+            localStorage.setItem('contentType', id);
+            q.category = '';
+            drawType();
+            drawTarget();
+            await Promise.all([loadInstalled(), loadCategories()]);
+            run(true);
+          },
+        }, label),
+      ),
+    );
+  }
+
+  async function installModpack(m) {
+    const ok = await confirmDialog(`Create a profile from ${m.title}?`, `This downloads the latest version of the modpack and creates a new profile with its Minecraft version, loader and mods. Your other profiles are not touched.`, { confirm: 'Create profile' });
+    if (!ok) return;
+    const taskId = await safe(() => api('modpack:install', m.provider, m.id));
+    if (!taskId) return;
+    const t = await waitTask(taskId);
+    if (t.status === 'done') {
+      await refreshProfiles();
+      selectProfile(t.result.profile.id);
+      toast(`Created "${t.result.profile.name}".${t.result.warnings?.length ? '\n' + t.result.warnings.join('\n') : ''}`, 'ok');
+      drawTarget();
+      if (t.result.manualDownloads?.length) toast(`${t.result.manualDownloads.length} mod(s) need a manual download. See Profiles.`, 'error');
+    }
+  }
+
   function drawSource() {
     sourceSeg.replaceChildren(
       ...[['modrinth', 'Modrinth'], ['curseforge', 'CurseForge']].map(([id, label]) =>
@@ -58,8 +99,10 @@ export async function renderBrowse(root) {
   async function loadInstalled() {
     const p = currentProfile();
     installedKeys = new Set();
-    if (!p || p.loader === 'vanilla') return;
-    for (const m of (await safe(() => api('mods:list', p.id), { quiet: true })) || []) if (m.projectId) installedKeys.add(`${m.provider}:${m.projectId}`);
+    if (!p || q.type === 'modpack') return;
+    if (q.type === 'mod' && p.loader === 'vanilla') return;
+    const list = q.type === 'mod' ? await safe(() => api('mods:list', p.id), { quiet: true }) : await safe(() => api('packs:list', p.id, q.type), { quiet: true });
+    for (const m of list || []) if (m.projectId) installedKeys.add(`${m.provider}:${m.projectId}`);
   }
 
   async function loadCategories() {
@@ -74,7 +117,7 @@ export async function renderBrowse(root) {
     draw(cache);
     const st = providerStatus[q.provider];
     if (st && !st.ok) return;
-    cache = (await safe(() => api('mods:categories', q.provider), { quiet: true })) || [];
+    cache = (await safe(() => api('mods:categories', q.provider, q.type), { quiet: true })) || [];
     draw(cache);
   }
 
@@ -96,10 +139,10 @@ export async function renderBrowse(root) {
       return;
     }
     loading = true;
-    const filters = q.matchProfile && p && p.loader !== 'vanilla' ? { mcVersion: p.mcVersion, loader: p.loader } : {};
+    const filters = q.type === 'modpack' || !q.matchProfile || !p ? {} : q.type === 'mod' ? (p.loader !== 'vanilla' ? { mcVersion: p.mcVersion, loader: p.loader } : {}) : { mcVersion: p.mcVersion };
     let r;
     try {
-      r = await api('mods:search', q.provider, { query: q.query, sort: q.sort, category: q.category || undefined, offset: q.offset, limit: PAGE_SIZE, ...filters });
+      r = await api('mods:search', q.provider, { type: q.type, query: q.query, sort: q.sort, category: q.category || undefined, offset: q.offset, limit: PAGE_SIZE, ...filters });
     } catch (e) {
       if (my !== seq) return;
       loading = false;
@@ -111,7 +154,7 @@ export async function renderBrowse(root) {
     results.querySelector('.more')?.remove();
     if (reset) results.replaceChildren();
     if (reset && !r.hits.length) {
-      results.append(emptyState('search', 'No mods found', p && q.matchProfile ? `Nothing matches "${q.query}" for ${p.mcVersion} ${LOADER_NAMES[p.loader]}.` : 'Try a different search.', q.matchProfile && p ? btn('Show incompatible too', { onclick: () => ((q.matchProfile = false), drawTarget(), run(true)) }) : null));
+      results.append(emptyState('search', `No ${typeWord()} found`, p && q.matchProfile && q.type !== 'modpack' ? `Nothing matches "${q.query}" for ${p.mcVersion}${q.type === 'mod' ? ' ' + LOADER_NAMES[p.loader] : ''}.` : 'Try a different search.', q.matchProfile && p && q.type !== 'modpack' ? btn('Show incompatible too', { onclick: () => ((q.matchProfile = false), drawTarget(), run(true)) }) : null));
       return;
     }
     r.hits.forEach((m) => results.append(modRow(m)));
@@ -122,10 +165,11 @@ export async function renderBrowse(root) {
   function modRow(m) {
     const p = currentProfile();
     const have = installedKeys.has(`${m.provider}:${m.id}`);
-    const can = p && p.loader !== 'vanilla';
+    const can = m.type === 'modpack' ? true : m.type === 'resourcepack' ? !!p : !!p && p.loader !== 'vanilla';
+    const why = m.type === 'shader' ? 'Shaders need a profile with a mod loader (Iris is installed for you)' : 'Choose a profile with a mod loader first';
     const installBtn = have
       ? h('span.chip.ok', icon('check'), 'Installed')
-      : btn('Install', { cls: 'primary sm', disabled: !can, title: can ? '' : 'Choose a profile with a mod loader first', onclick: () => openInstall(m, undefined, installBtn) });
+      : btn(m.type === 'modpack' ? 'Create profile' : 'Install', { cls: 'primary sm', disabled: !can, title: can ? '' : why, onclick: () => (m.type === 'modpack' ? installModpack(m) : openInstall(m, undefined, installBtn)) });
     return h(
       'div.mrow',
       modIcon(m.iconUrl, m.title),
@@ -135,7 +179,7 @@ export async function renderBrowse(root) {
         h('div.desc', m.summary),
         h('div.meta', h('span', icon('download'), fmtNum(m.downloads)), m.updated ? h('span', icon('clock'), timeAgo(m.updated)) : null, ...m.categories.filter((c) => !/^(fabric|forge|neoforge|quilt|liteloader|rift)$/.test(c)).slice(0, 2).map((c) => h('span', { style: { textTransform: 'capitalize' } }, c))),
       ),
-      h('div.acts', installBtn, btn('', { cls: 'sm ghost', icon: 'list', title: 'Choose another version', disabled: !can, onclick: () => openVersions(m) }), btn('', { cls: 'sm ghost', icon: 'link', title: `Open on ${m.provider === 'modrinth' ? 'Modrinth' : 'CurseForge'}`, onclick: () => api('shell:openExternal', m.url) })),
+      h('div.acts', installBtn, m.type === 'mod' ? btn('', { cls: 'sm ghost', icon: 'list', title: 'Choose another version', disabled: !can, onclick: () => openVersions(m) }) : null, btn('', { cls: 'sm ghost', icon: 'link', title: `Open on ${m.provider === 'modrinth' ? 'Modrinth' : 'CurseForge'}`, onclick: () => api('shell:openExternal', m.url) })),
     );
   }
 
@@ -143,7 +187,7 @@ export async function renderBrowse(root) {
   async function openInstall(m, fileId, trigger) {
     const p = currentProfile();
     const busy = modal({ title: `Install ${m.title}`, body: h('div.empty', h('span.spinner'), 'Finding a compatible file and its dependencies…') });
-    const plan = await safe(() => api('mods:plan', p.id, { provider: m.provider, projectId: m.id, fileId }));
+    const plan = await safe(() => api('mods:plan', p.id, { provider: m.provider, projectId: m.id, fileId, type: m.type }));
     busy.close();
     if (!plan) return;
     const optional = new Set();
@@ -154,11 +198,12 @@ export async function renderBrowse(root) {
       body: h(
         'div',
         h('div.row', { style: { marginBottom: '12px' } }, h('span.muted', 'For profile'), h('b', p.name), h('span.chip.accent', profileLabel(p))),
+        m.type === 'shader' ? h('div.note.info', icon('info'), h('div.small', 'Shaders run through Iris (Oculus on Forge). If it is not installed yet, it is added below together with what it needs.')) : null,
         plan.blockers.length ? h('div.note.bad', icon('alert'), h('div', plan.blockers.map((b) => h('div', b)))) : null,
         plan.warnings.length ? h('div.note.warn', icon('alert'), h('div', plan.warnings.map((b) => h('div', b)))) : null,
         h('h2.sec', { style: { marginTop: 0 } }, `Will be installed (${plan.items.length})`),
         plan.items.map((it) =>
-          h('div.plan-item', modIcon(it.project.iconUrl, it.project.title), h('div.grow', h('b', it.project.title), h('div.small.muted.ellipsis', `${it.file.versionNumber}  ·  ${it.file.fileName}`), it.role === 'dependency' ? h('div.small.faint', `Required by ${it.requiredBy}`) : null, it.loaderNote ? h('div.small.faint', it.loaderNote) : null), it.file.url ? h('span.chip' + (it.role === 'requested' ? '.accent' : ''), it.role === 'requested' ? 'Mod' : 'Dependency') : h('span.chip.warn', 'Manual download')),
+          h('div.plan-item', modIcon(it.project.iconUrl, it.project.title), h('div.grow', h('b', it.project.title), h('div.small.muted.ellipsis', `${it.file.versionNumber}  ·  ${it.file.fileName}`), it.role === 'dependency' ? h('div.small.faint', `Required by ${it.requiredBy}`) : null, it.loaderNote ? h('div.small.faint', it.loaderNote) : null), it.file.url ? h('span.chip' + (it.role === 'requested' ? '.accent' : ''), it.role === 'requested' ? ({ mod: 'Mod', resourcepack: 'Resource pack', shader: 'Shader pack' })[it.project.type] || 'Mod' : 'Needed') : h('span.chip.warn', 'Manual download')),
         ),
         plan.optional.length
           ? [h('h2.sec', 'Optional (only installed if ticked)'), plan.optional.map((o) => h('label.plan-item', h('input', { type: 'checkbox', onchange: (e) => (e.target.checked ? optional.add(o.project.id) : optional.delete(o.project.id)) }), modIcon(o.project.iconUrl, o.project.title), h('div.grow', h('b', o.project.title), h('div.small.faint', `Recommended by ${o.requiredBy}`))))]
@@ -173,11 +218,11 @@ export async function renderBrowse(root) {
             disabled: !files,
             onclick: async () => {
               close();
-              const taskId = await safe(() => api('mods:install', p.id, { provider: m.provider, projectId: m.id, fileId, ignoreBlockers: plan.blockers.length > 0 }, [...optional].map((id) => ({ provider: m.provider, projectId: id }))));
+              const taskId = await safe(() => api('mods:install', p.id, { provider: m.provider, projectId: m.id, fileId, type: m.type, ignoreBlockers: plan.blockers.length > 0 }, [...optional].map((id) => ({ provider: m.provider, projectId: id }))));
               if (!taskId) return;
               const t = await waitTask(taskId);
               if (t.status === 'done') {
-                toast(`Installed ${t.result.installed.join(', ')}`, 'ok');
+                toast(`Installed ${t.result.installed.join(', ')}${m.type !== 'mod' ? '. Turn it on in Installed.' : ''}`, 'ok');
                 await loadInstalled();
                 const row = trigger?.closest?.('.mrow');
                 if (row) trigger.replaceWith(h('span.chip.ok', icon('check'), 'Installed'));
@@ -215,6 +260,7 @@ export async function renderBrowse(root) {
   }
 
   drawTarget();
+  drawType();
   drawSource();
   providerStatus = (await safe(() => api('mods:providers'), { quiet: true })) || {};
   drawSource();

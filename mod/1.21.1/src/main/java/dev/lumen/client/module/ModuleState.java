@@ -8,6 +8,7 @@ public final class ModuleState {
     public float scale = 1.0F;
     public int color = 0;
     public boolean background = true;
+    public boolean shadow = true;
 
     public ModuleState() {}
 

@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
-import net.minecraft.client.renderer.Panorama;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -22,12 +21,13 @@ import net.minecraft.resources.Identifier;
  * The layout adapts to the GUI scale, so it also fits small windows / large GUI scales.
  */
 public class LumenTitleScreen extends Screen {
-    private static final int LOGO_W = 1000, LOGO_H = 420; // texture size of lumen:textures/gui/logo.png
+    private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
     private static final Identifier LOGO = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo.png");
+    private static final Identifier BG = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/background.png");
+    private static final int BG_W = 1600, BG_H = 900;
     private static final int ACCENT = 0xFF3DB8FF;
     private static final int PAD = 12;
 
-    private final Panorama panorama = new Panorama();
     private int panelW, logoX, logoY, logoW, logoH;
     private ServerList servers;
 
@@ -53,21 +53,15 @@ public class LumenTitleScreen extends Screen {
         logoY = Math.max(PAD, (y0 - logoH) / 2);
 
         int y = y0;
-        addRenderableWidget(Button.builder(Component.translatable("menu.singleplayer"), b -> minecraft.setScreenAndShow(new SelectWorldScreen(this)))
-            .bounds(PAD, y, bw, bh).build());
+        addRenderableWidget(UiButton.of(Component.translatable("menu.singleplayer"), b -> minecraft.setScreenAndShow(new SelectWorldScreen(this)), PAD, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.translatable("menu.multiplayer"), b -> minecraft.setScreenAndShow(new JoinMultiplayerScreen(this)))
-            .bounds(PAD, y, bw, bh).build());
+        addRenderableWidget(UiButton.of(Component.translatable("menu.multiplayer"), b -> minecraft.setScreenAndShow(new JoinMultiplayerScreen(this)), PAD, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.literal("Realms"), b -> minecraft.setScreenAndShow(new RealmsMainScreen(this)))
-            .bounds(PAD, y, half, bh).build());
-        addRenderableWidget(Button.builder(Component.translatable("menu.options"), b -> minecraft.setScreenAndShow(new OptionsScreen(this, minecraft.options)))
-            .bounds(PAD + half + gap, y, half, bh).build());
+        addRenderableWidget(UiButton.of(Component.literal("Realms"), b -> minecraft.setScreenAndShow(new RealmsMainScreen(this)), PAD, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.options"), b -> minecraft.setScreenAndShow(new OptionsScreen(this, minecraft.options)), PAD + half + gap, y, half, bh));
         y += bh + gap;
-        addRenderableWidget(Button.builder(Component.literal("Lumen"), b -> minecraft.setScreenAndShow(new LumenSettingsScreen(this)))
-            .bounds(PAD, y, half, bh).build());
-        addRenderableWidget(Button.builder(Component.translatable("menu.quit"), b -> minecraft.stop())
-            .bounds(PAD + half + gap, y, half, bh).build());
+        addRenderableWidget(UiButton.of(Component.literal("Lumen"), b -> minecraft.setScreenAndShow(new LumenSettingsScreen(this)), PAD, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.quit"), b -> minecraft.stop(), PAD + half + gap, y, half, bh));
 
         servers = new ServerList(minecraft);
         servers.load();
@@ -77,8 +71,7 @@ public class LumenTitleScreen extends Screen {
             int shown = Math.min(Math.max(0, (this.height - 52 - PAD) / (bh + gap)), Math.min(6, servers.size()));
             for (int i = 0; i < shown && rw > 80; i++) {
                 ServerData data = servers.get(i);
-                addRenderableWidget(Button.builder(Component.literal(data.name), b -> join(data))
-                    .bounds(rx, 40 + i * (bh + gap), rw, bh).build());
+                addRenderableWidget(UiButton.of(Component.literal(data.name), b -> join(data), rx, 40 + i * (bh + gap), rw, bh));
             }
         }
     }
@@ -90,7 +83,12 @@ public class LumenTitleScreen extends Screen {
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         // Everything that must sit *under* the buttons is drawn here.
-        panorama.extractRenderState(g, this.width, this.height);
+        // Static artwork drawn from the mod's own namespace (a resource pack cannot replace it), with a slow drift.
+        double scale = Math.max(this.width / (double) BG_W, this.height / (double) BG_H) * 1.1;
+        int dw = (int) (BG_W * scale), dh = (int) (BG_H * scale);
+        double drift = 0.5 + 0.5 * Math.sin(System.nanoTime() / 1.0e10);
+        int bx = -(int) ((dw - this.width) * drift), by = -(dh - this.height) / 2;
+        g.blit(RenderPipelines.GUI_TEXTURED, BG, bx, by, 0.0F, 0.0F, dw, dh, BG_W, BG_H, BG_W, BG_H);
         g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
         g.fill(0, 0, panelW, this.height, 0xB30A0C10);
         g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);

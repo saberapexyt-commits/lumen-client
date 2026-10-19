@@ -1,7 +1,7 @@
 import { getJson, postJson } from '../net';
 import { LauncherError } from '../logger';
 import { getCurseForgeKey } from '../settings';
-import { Category, ModDependency, ModFile, ModLoader, ModProject, ModProvider, SearchQuery, SortKey } from './types';
+import { Category, ContentType, ModDependency, ModFile, ModLoader, ModProject, ModProvider, SearchQuery, SortKey } from './types';
 
 /**
  * CurseForge Core API (https://docs.curseforge.com/). Requires an API key - the key is supplied
@@ -9,7 +9,9 @@ import { Category, ModDependency, ModFile, ModLoader, ModProject, ModProvider, S
  */
 const API = 'https://api.curseforge.com/v1';
 const GAME_ID = 432; // Minecraft
-const CLASS_MODS = 6;
+const CLASS_ID: Record<ContentType, number> = { mod: 6, resourcepack: 12, shader: 6552, modpack: 4471 };
+const TYPE_OF_CLASS: Record<number, ContentType> = { 6: 'mod', 12: 'resourcepack', 6552: 'shader', 4471: 'modpack' };
+const URL_SEGMENT: Record<ContentType, string> = { mod: 'mc-mods', resourcepack: 'texture-packs', shader: 'shaders', modpack: 'modpacks' };
 
 const LOADER_TYPE: Record<ModLoader, number> = { forge: 1, fabric: 4, quilt: 5, neoforge: 6 };
 const LOADER_NAME: Record<ModLoader, string> = { forge: 'Forge', fabric: 'Fabric', quilt: 'Quilt', neoforge: 'NeoForge' };
@@ -29,6 +31,7 @@ async function get<T>(path: string, ttl = 60_000): Promise<T> {
 function projectFrom(m: any): ModProject {
   return {
     provider: 'curseforge',
+    type: TYPE_OF_CLASS[m.classId] ?? 'mod',
     id: String(m.id),
     slug: m.slug,
     title: m.name,
@@ -37,7 +40,7 @@ function projectFrom(m: any): ModProject {
     author: m.authors?.[0]?.name ?? '',
     downloads: m.downloadCount ?? 0,
     categories: (m.categories ?? []).map((c: any) => c.name),
-    url: m.links?.websiteUrl ?? `https://www.curseforge.com/minecraft/mc-mods/${m.slug}`,
+    url: m.links?.websiteUrl ?? `https://www.curseforge.com/minecraft/${URL_SEGMENT[TYPE_OF_CLASS[m.classId] ?? 'mod']}/${m.slug}`,
     updated: m.dateModified,
     gameVersions: [...new Set<string>((m.latestFilesIndexes ?? []).map((i: any) => i.gameVersion))],
     allowDistribution: m.allowModDistribution !== false,
@@ -85,16 +88,16 @@ export const curseforge: ModProvider = {
   async search(q: SearchQuery) {
     const p = new URLSearchParams({
       gameId: String(GAME_ID),
-      classId: String(CLASS_MODS),
+      classId: String(CLASS_ID[q.type ?? 'mod']),
       searchFilter: q.query,
       sortField: String(SORT[q.sort]),
       sortOrder: 'desc',
       pageSize: String(Math.min(q.limit, 50)),
       index: String(q.offset),
     });
-    if (q.mcVersion) p.set('gameVersion', q.mcVersion);
-    // For Quilt, search Fabric+Quilt both (CurseForge allows a list via modLoaderTypes).
-    if (q.loader) {
+    if (q.mcVersion && q.type !== 'modpack') p.set('gameVersion', q.mcVersion);
+    // For Quilt, search Fabric+Quilt both (CurseForge allows a list via modLoaderTypes). Loaders only apply to mods.
+    if (q.loader && (q.type ?? 'mod') === 'mod') {
       if (q.loader === 'quilt') p.set('modLoaderTypes', JSON.stringify([LOADER_TYPE.quilt, LOADER_TYPE.fabric]));
       else p.set('modLoaderType', String(LOADER_TYPE[q.loader]));
     }
@@ -158,8 +161,8 @@ export const curseforge: ModProvider = {
     return file;
   },
 
-  async getCategories(): Promise<Category[]> {
-    const r = await get<{ data: any[] }>(`/categories?gameId=${GAME_ID}&classId=${CLASS_MODS}`, 3600_000);
+  async getCategories(type: ContentType = 'mod'): Promise<Category[]> {
+    const r = await get<{ data: any[] }>(`/categories?gameId=${GAME_ID}&classId=${CLASS_ID[type]}`, 3600_000);
     return r.data.filter((c) => !c.isClass).map((c) => ({ id: String(c.id), name: c.name }));
   },
 };

@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
  * The layout adapts to the GUI scale, so it also fits small windows / large GUI scales.
  */
 public class LumenTitleScreen extends Screen {
-    private static final int LOGO_W = 1000, LOGO_H = 420; // texture size of lumen:textures/gui/logo.png
+    private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
     private static final ResourceLocation LOGO = new ResourceLocation(LumenClient.MOD_ID, "textures/gui/logo.png");
     private static final CubeMap CUBE_MAP = new CubeMap(new ResourceLocation(LumenClient.MOD_ID, "textures/gui/panorama/panorama"));
     private static final int ACCENT = 0xFF3DB8FF;

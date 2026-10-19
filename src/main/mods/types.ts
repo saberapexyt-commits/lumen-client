@@ -1,11 +1,14 @@
 export type ProviderId = 'modrinth' | 'curseforge';
 export type ModLoader = 'fabric' | 'quilt' | 'forge' | 'neoforge';
 export type ReleaseType = 'release' | 'beta' | 'alpha';
+/** What kind of thing a project is. Mods need a loader; packs and shaders only care about the Minecraft version. */
+export type ContentType = 'mod' | 'resourcepack' | 'shader' | 'modpack';
 export type SortKey = 'relevance' | 'downloads' | 'updated' | 'newest' | 'follows';
 
 /** A mod/project as shown in browse results - identical shape for every provider. */
 export interface ModProject {
   provider: ProviderId;
+  type: ContentType;
   id: string;
   slug: string;
   title: string;
@@ -55,6 +58,7 @@ export interface ModFile {
 }
 
 export interface SearchQuery {
+  type?: ContentType; // default 'mod'
   query: string;
   mcVersion?: string;
   loader?: ModLoader;
@@ -85,7 +89,7 @@ export interface ModProvider {
   /** All releases of the project, optionally pre-filtered by the provider. Resolver re-checks compatibility. */
   getFiles(projectId: string, filter?: { mcVersion?: string; loader?: ModLoader }): Promise<ModFile[]>;
   getFile(projectId: string, fileId: string): Promise<ModFile>;
-  getCategories(): Promise<Category[]>;
+  getCategories(type?: ContentType): Promise<Category[]>;
   /** Identify local jars by SHA-1 (used when importing existing mods). Optional per provider. */
   identifyByHashes?(sha1s: string[]): Promise<Record<string, { project: ModProject; file: ModFile }>>;
 }
