@@ -11,9 +11,9 @@ const root = path.join(__dirname, '..');
 const dataUrl = (p, mime) => `data:${mime};base64,${fs.readFileSync(p).toString('base64')}`;
 
 const drawing = `
-(async (logoUrl, bgUrl, markUrl) => {
+(async (logoUrl, bgUrl, markUrl, wideUrl) => {
   const load = (u) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
-  const [logo, bg, mark] = await Promise.all([load(logoUrl), load(bgUrl), load(markUrl)]);
+  const [logo, bg, mark, wide] = await Promise.all([load(logoUrl), load(bgUrl), load(markUrl), load(wideUrl)]);
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   const out = {};
   const png = (name, c) => (out[name] = c.toDataURL('image/png'));
@@ -54,9 +54,28 @@ const drawing = `
     }
     g.putImageData(d, 0, 0); return c;
   };
-  const logoC = mk(1024, 256); { const g = logoC.getContext('2d');
-    const emb = cut(logo, 342, 50, 338, 336, 236, 234); g.drawImage(emb, 20, 11);
-    const word = cut(logo, 352, 394, 320, 106, 726, 240); g.drawImage(word, 268, 8); }
+  // The wide logo sits on a flat navy background: derive alpha from distance to that colour and
+  // un-premultiply, so glows keep their colour instead of turning into a grey halo.
+  const logoC = mk(1024, 256); {
+    const t = mk(wide.width, wide.height); const tg = t.getContext('2d'); tg.drawImage(wide, 0, 0);
+    const d = tg.getImageData(0, 0, t.width, t.height); const p = d.data;
+    const bgc = [p[0], p[1], p[2]]; // top-left pixel = background
+    for (let i = 0; i < p.length; i += 4) {
+      const dist = Math.max(Math.abs(p[i] - bgc[0]), Math.abs(p[i + 1] - bgc[1]), Math.abs(p[i + 2] - bgc[2]));
+      const a = Math.min(1, Math.max(0, (dist - 10) / 70));
+      if (a > 0) for (let k = 0; k < 3; k++) p[i + k] = Math.max(0, Math.min(255, Math.round((p[i + k] - bgc[k] * (1 - a)) / a)));
+      p[i + 3] = Math.round(a * 255);
+    }
+    tg.putImageData(d, 0, 0);
+    // crop to the visible artwork so the logo fills its slot instead of floating in padding
+    let x0 = t.width, y0 = t.height, x1 = 0, y1 = 0;
+    for (let y = 0; y < t.height; y++) for (let x = 0; x < t.width; x++) if (p[(y * t.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const pad = 6; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(t.width - 1, x1 + pad); y1 = Math.min(t.height - 1, y1 + pad);
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    const g = logoC.getContext('2d'); g.imageSmoothingQuality = 'high';
+    const k = Math.min(1000 / cw, 236 / ch); const w = cw * k, h = ch * k;
+    g.drawImage(t, x0, y0, cw, ch, (1024 - w) / 2, (256 - h) / 2 - 8, w, h);
+  }
   png('minecraft', logoC);
   png('minceraft', logoC);
   { const c = mk(512, 64); const g = c.getContext('2d');
@@ -84,7 +103,8 @@ app.whenReady().then(async () => {
   const logo = dataUrl(path.join(root, 'src/renderer/assets/logo-full.png'), 'image/png');
   const bg = dataUrl(path.join(root, 'src/renderer/assets/bg.webp'), 'image/webp');
   const mark = dataUrl(path.join(root, 'src/renderer/assets/logo-mark.png'), 'image/png');
-  const out = await win.webContents.executeJavaScript(`(${drawing})(${JSON.stringify(logo)}, ${JSON.stringify(bg)}, ${JSON.stringify(mark)})`);
+  const wide = dataUrl(path.join(root, 'src/renderer/assets/logo-wide.png'), 'image/png');
+  const out = await win.webContents.executeJavaScript(`(${drawing})(${JSON.stringify(logo)}, ${JSON.stringify(bg)}, ${JSON.stringify(mark)}, ${JSON.stringify(wide)})`);
   const buf = (n) => Buffer.from(out[n].split(',')[1], 'base64');
 
   const zip = new AdmZip();
@@ -100,7 +120,8 @@ app.whenReady().then(async () => {
     zip.addFile(`${T}sprites/widget/${b}.png.mcmeta`, nine);
   }
   // Older versions (before 1.20.2) draw buttons from widgets.png, so only the background/logo/splashes apply there.
-  zip.addFile('assets/minecraft/texts/splashes.txt', fs.readFileSync(path.join(root, 'resources/theme/splashes.txt')));
+  // An empty splash list means the title screen shows no yellow splash text at all.
+  zip.addFile('assets/minecraft/texts/splashes.txt', Buffer.from('\n'));
   zip.addFile('pack.png', buf('pack'));
   zip.addFile(
     'pack.mcmeta',
