@@ -39,6 +39,39 @@ function navBtn(p) {
   return h('button.nav-btn' + (p.id === page ? '.active' : ''), { onclick: () => navigate(p.id), title: p.label }, icon(p.icon), h('span', p.label));
 }
 
+/** The head of the signed-in account's skin, cached so the sidebar shows it instantly. */
+const faceKey = (acc) => 'face:' + acc.id;
+function faceUrl(acc) {
+  try {
+    return localStorage.getItem(faceKey(acc));
+  } catch {
+    return null;
+  }
+}
+async function refreshFace() {
+  const acc = state.accounts.accounts.find((a) => a.id === state.accounts.active);
+  if (!acc) return;
+  const data = await safe(() => api('skins:account'), { quiet: true });
+  if (!data?.skin) return;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 8;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.drawImage(img, 8, 8, 8, 8, 0, 0, 8, 8); // face
+    g.drawImage(img, 40, 8, 8, 8, 0, 0, 8, 8); // hat layer
+    try {
+      localStorage.setItem(faceKey(acc), c.toDataURL());
+    } catch {
+      /* storage unavailable */
+    }
+    renderSidebar();
+  };
+  img.src = data.skin.dataUrl;
+}
+window.__refreshFace = refreshFace;
+
 function renderSidebar() {
   const acc = state.accounts.accounts.find((a) => a.id === state.accounts.active);
   document.getElementById('sidebar').replaceChildren(
@@ -49,7 +82,7 @@ function renderSidebar() {
     h(
       'button.acct',
       { onclick: () => navigate('settings', { tab: 'accounts' }), title: acc ? `Signed in as ${acc.name}` : 'Sign in with Microsoft' },
-      h('div.avatar' + (acc ? '' : '.off'), acc ? acc.name.slice(0, 1).toUpperCase() : icon('user', 14)),
+      h('div.avatar' + (acc ? '' : '.off'), acc ? (faceUrl(acc) ? h('img.face', { src: faceUrl(acc), alt: '' }) : acc.name.slice(0, 1).toUpperCase()) : icon('user', 14)),
       h('div.t', h('b.ellipsis', acc ? acc.name : 'Not signed in'), h('span', acc ? 'Microsoft account' : 'Click to sign in')),
     ),
     navBtn(SETTINGS),
@@ -67,6 +100,7 @@ function updateCard() {
 export async function refreshAccounts() {
   state.accounts = (await safe(() => api('auth:list'), { quiet: true })) || state.accounts;
   renderSidebar();
+  refreshFace();
 }
 
 function applyTheme() {

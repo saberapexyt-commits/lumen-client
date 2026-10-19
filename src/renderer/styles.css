@@ -365,3 +365,4 @@ body.home #bg-dim { background: linear-gradient(180deg, rgba(8, 10, 14, 0.15), r
 .sk-cape.on { border-color: var(--accent); }
 .sk-cape .cp { width: 40px; height: 64px; background-size: 640% 200%; background-position: 1.85% 6.25%; image-rendering: pixelated; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: var(--faint); }
 .sk-cape .cp.none { background: var(--panel); background-image: none; }
+.avatar .face { width: 100%; height: 100%; image-rendering: pixelated; display: block; border-radius: inherit; }

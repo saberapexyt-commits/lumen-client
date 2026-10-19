@@ -315,7 +315,9 @@ export async function renderSkins(root) {
       body: h('div', h('p.muted', { style: { marginTop: 0 } }, 'Copies that player’s current public skin into your library. Their account is not touched.'), input),
       actions: [(close) => btn('Cancel', { onclick: close }), (close) => btn('Add skin', { cls: 'primary', onclick: () => go(close) })],
     });
-    input.onkeydown = (e) => e.key === 'Enter' && go(m.close);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') go(m.close);
+    }); // not onkeydown=: returning false from a handler would block typing
     setTimeout(() => (window.focus(), input.focus()), 60);
   }
 
