@@ -21,7 +21,7 @@ import net.minecraft.resources.Identifier;
  * your saved servers bottom left. The layout adapts to the GUI scale, so it also fits small windows / large GUI scales.
  */
 public class LumenTitleScreen extends Screen {
-    private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
+    private static final int LOGO_W = 2000, LOGO_H = 1280; // texture size of lumen:textures/gui/logo.png
     private static final Identifier BG = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/background.png");
     private static final int BG_W = 1600, BG_H = 900;
     private static final int ACCENT = 0xFF3DB8FF;
@@ -44,7 +44,7 @@ public class LumenTitleScreen extends Screen {
         int w = LOGO_SIZES[LOGO_SIZES.length - 1];
         for (int s : LOGO_SIZES) if (s >= need * 0.97) { w = s; break; }
         logoTexW = w;
-        logoTexH = (int) Math.round(w * 840.0 / 2000.0);
+        logoTexH = (int) Math.round(w * 1280.0 / 2000.0);
         logoTexture = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo_" + w + ".png");
     }
 
@@ -68,7 +68,7 @@ public class LumenTitleScreen extends Screen {
         // logo gets whatever height is left above the button block
         int top = 12, bottom = this.height - 12 - iconSize - 8;
         int maxLogoH = Math.max(24, bottom - top - blockH - 10);
-        logoW = Math.min((int) (bw * 1.2), (int) (maxLogoH * (LOGO_W / (double) LOGO_H)));
+        logoW = Math.min((int) (bw * 0.85), (int) (maxLogoH * (LOGO_W / (double) LOGO_H)));
         logoH = (int) (logoW * (LOGO_H / (double) LOGO_W));
         int total = logoH + 10 + blockH;
         int y0 = top + Math.max(0, (bottom - top - total) / 2);

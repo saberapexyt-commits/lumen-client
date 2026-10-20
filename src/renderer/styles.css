@@ -304,7 +304,7 @@ input[type='checkbox'] { accent-color: var(--accent); }
 /* ---------- splash ---------- */
 #splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; transition: opacity 0.45s ease, visibility 0.45s; }
 #splash.gone { opacity: 0; visibility: hidden; }
-#splash img { width: min(520px, 70vw); aspect-ratio: 1024 / 559; -webkit-mask-image: radial-gradient(ellipse 50% 52% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 52% at 50% 50%, #000 62%, transparent 100%); animation: splashIn 0.7s ease-out both; }
+#splash img { width: min(400px, 60vw); aspect-ratio: 1024 / 700; animation: splashIn 0.7s ease-out both; }
 @keyframes splashIn { from { opacity: 0; transform: scale(0.97); } }
 #splash .bar { width: 180px; }
 #splash .st { font-size: 11.5px; color: var(--faint); letter-spacing: 1px; margin-top: -14px; }
