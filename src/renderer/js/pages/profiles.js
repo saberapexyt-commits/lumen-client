@@ -25,6 +25,7 @@ export async function playProfile(id) {
 }
 
 export async function renderProfiles(root, params = {}) {
+  await refreshProfiles(); // pick up profiles added outside the UI (imports, copies)
   const wrap = h('div.split');
   const list = h('div.plist');
   const detail = h('div.split-detail');
