@@ -385,9 +385,27 @@ else {
     initUpdater((u) => send('update:state', u));
     log.info(`Lumen Client ${app.getVersion()} started; data in ${getRoot()}`);
   });
-  app.on('window-all-closed', () => {
-    // Keep running games alive; just quit the launcher UI.
-    app.quit();
+  app.on('window-all-closed', () => app.quit());
+  let closing = false;
+  app.on('before-quit', (e) => {
+    if (closing) return;
+    const ids = game.runningIds();
+    if (ids.length) {
+      // Never kill a game silently (an unsaved world could be lost): ask.
+      const choice = dialog.showMessageBoxSync({
+        type: 'question',
+        title: 'Lumen Client',
+        message: ids.length === 1 ? 'Minecraft is still running.' : `${ids.length} Minecraft instances are still running.`,
+        detail: 'Close it together with Lumen? Choose "Keep it open" if you are in the middle of a world.',
+        buttons: ['Close everything', 'Keep it open'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (choice === 0) for (const id of ids) game.killGame(id);
+    }
+    closing = true;
+    for (const t of tasks.values()) if (t.status === 'running') t.cancel(); // stop downloads / installers
+    void e;
   });
   process.on('unhandledRejection', (e) => log.error('Unhandled rejection', e instanceof Error ? e : new Error(String(e))));
 }
