@@ -15,6 +15,8 @@ public final class ModuleState {
     public int gap = 2;
     public int thickness = 1;
     public boolean outline = true;
+    /** Extra on/off setting for modules that need one (Auto Fish: allow on multiplayer servers). */
+    public boolean extra = false;
 
     public ModuleState() {}
 

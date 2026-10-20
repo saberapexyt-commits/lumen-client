@@ -29,6 +29,8 @@ RENAMES_263 = [
      'pose.pushMatrix();\n        pose.translate((float) x, (float) y);\n        pose.scale(m.state().scale, m.state().scale);\n        m.render(g, mc);\n        pose.popMatrix();'),
     ('mc.screen != null', 'mc.gui.screen() != null'),
     ('mc.level.getDayTime()', 'mc.level.getOverworldClockTime()'),
+    ("mc.player.displayClientMessage(Component.literal(", "mc.player.sendSystemMessage(Component.literal("),
+    ('server rules."), false);', 'server rules."));'),
     ('mc.player.swing(hand);', '// the swing animation takes extra arguments on 26.x, so Auto Fish skips it there'),  # 26.x replaced day time with a clock manager
 ]
 

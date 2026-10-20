@@ -1,6 +1,7 @@
 package dev.lumen.client.module;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.Items;
@@ -10,15 +11,19 @@ public final class GameplayModules {
     private GameplayModules() {}
 
     /**
-     * Reels the line in when a fish bites and casts again. Start fishing yourself (first cast); Auto Fish takes over
-     * from there. It never runs on multiplayer servers: most servers do not allow automated fishing.
+     * Reels the line in when a fish bites and casts again, so you can go AFK. Start fishing yourself (first cast);
+     * Auto Fish takes over from there. On multiplayer servers it only runs if you switch "On servers" on, because many
+     * servers do not allow automated fishing and can ban for it: check the server's rules first.
      */
     public static final class AutoFish extends LumenModule {
         private int cooldown = -1; // ticks until the next cast, -1 = nothing pending
         private int castAge;
+        private int idle; // ticks with a rod in hand but no line out, after fishing was started
+        private boolean armed; // set once you have cast yourself
+        private boolean warned;
 
         public AutoFish() {
-            super("autofish", "Auto Fish", "Reels in when a fish bites and recasts. Singleplayer only.", false, 0, 0);
+            super("autofish", "Auto Fish", "Reels in on a bite and recasts so you can go AFK. Singleplayer unless 'On servers' is on.", false, 0, 0);
         }
 
         @Override
@@ -31,23 +36,39 @@ public final class GameplayModules {
             return Math.max(1, state().size) * 4;
         }
 
+        private void reset() {
+            cooldown = -1;
+            castAge = 0;
+            idle = 0;
+            armed = false;
+        }
+
         @Override
         public void tick(Minecraft mc) {
-            if (!enabled() || mc.player == null || mc.gameMode == null || !mc.isLocalServer() || mc.screen != null) {
-                cooldown = -1;
-                castAge = 0;
+            if (mc.player == null || mc.gameMode == null) {
+                warned = false;
+                reset();
                 return;
+            }
+            if (!enabled() || !(mc.isLocalServer() || state().extra)) {
+                reset();
+                return;
+            }
+            if (!mc.isLocalServer() && !warned) {
+                warned = true;
+                mc.player.displayClientMessage(Component.literal("[Lumen] Auto Fish is on. Many servers ban automated fishing, so check the server rules."), false);
             }
             InteractionHand hand = mc.player.getMainHandItem().is(Items.FISHING_ROD) ? InteractionHand.MAIN_HAND
                 : mc.player.getOffhandItem().is(Items.FISHING_ROD) ? InteractionHand.OFF_HAND : null;
             if (hand == null) {
-                cooldown = -1;
-                castAge = 0;
+                reset();
                 return;
             }
             FishingHook hook = mc.player.fishing;
             if (hook != null) {
+                armed = true;
                 cooldown = -1;
+                idle = 0;
                 castAge++;
                 // A bite pulls the bobber sharply down (the game sets its vertical speed to about -0.25 to -0.4).
                 if (castAge > 20 && hook.getHookedIn() == null && hook.getDeltaMovement().y < -0.15) {
@@ -63,6 +84,11 @@ public final class GameplayModules {
                     mc.gameMode.useItem(mc.player, hand);
                     mc.player.swing(hand);
                     cooldown = -1;
+                } else if (armed && cooldown < 0 && ++idle > 100) {
+                    // the line was lost (hooked something, lag, a failed cast): throw it again after five seconds
+                    mc.gameMode.useItem(mc.player, hand);
+                    mc.player.swing(hand);
+                    idle = 0;
                 }
             }
         }

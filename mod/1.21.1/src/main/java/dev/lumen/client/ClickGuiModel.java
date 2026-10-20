@@ -127,6 +127,7 @@ public final class ClickGuiModel {
             r.opts.add(new Opt(() -> "Outline: " + (s.outline ? "ON" : "OFF"), b -> s.outline = !s.outline));
         }
         if (m instanceof GameplayModules.AutoFish fish) {
+            r.opts.add(new Opt(() -> "On servers: " + (fish.state().extra ? "ON" : "OFF"), b -> fish.state().extra = !fish.state().extra));
             r.opts.add(new Opt(() -> "Recast delay: " + String.format(Locale.ROOT, "%.1f", fish.recastTicks() / 20.0) + "s",
                 b -> fish.state().size = Math.max(1, Math.min(15, fish.state().size + (b == 0 ? 1 : -1)))));
         }
