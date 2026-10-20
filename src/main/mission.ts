@@ -29,6 +29,7 @@ function sendToWindow(channel: string, payload: unknown) {
 /** Called when a game starts launching. Resets the buffer and opens (or refocuses) the window. */
 export function startMission(profile: Profile) {
   current = { profile, state: 'starting', startedAt: Date.now(), lines: [] };
+  ev = null;
   if (win && !win.isDestroyed()) {
     win.webContents.send('game:state', { profileId: profile.id, state: 'starting' });
     win.show();
@@ -53,11 +54,61 @@ export function startMission(profile: Profile) {
   win.on('closed', () => (win = null));
 }
 
+/**
+ * Minecraft's log4j config writes XML events (a few lines each). Turn them back into readable
+ * "[12:34:56] [Render thread/INFO] (Logger): message" lines; anything else passes through untouched.
+ */
+let ev: { head: string; msg: string[]; inMsg: boolean; extra: string[] } | null = null;
+
+function formatEvent(e: NonNullable<typeof ev>): string {
+  const attr = (n: string) => new RegExp(`${n}="([^"]*)"`).exec(e.head)?.[1] ?? '';
+  const ts = Number(attr('timestamp'));
+  const time = ts ? new Date(ts).toTimeString().slice(0, 8) : '--:--:--';
+  const logger = attr('logger').split('.').pop() || '';
+  const NL = String.fromCharCode(10);
+  const text = e.msg.join(NL).trim();
+  return `[${time}] [${attr('thread')}/${attr('level')}] (${logger}) ${text}${e.extra.length ? NL + e.extra.join(NL) : ''}`;
+}
+
+function* normalise(line: string): Generator<string> {
+  if (!ev && !line.includes('<log4j:Event')) {
+    if (line.includes('<log4j:') || line.includes('</log4j:') || /^\s*<\?xml/.test(line)) return; // stray XML scaffolding
+    yield line;
+    return;
+  }
+  if (!ev) ev = { head: line, msg: [], inMsg: false, extra: [] };
+  else if (line.includes('<log4j:Event')) ev.head = line;
+  let rest = line;
+  if (ev.inMsg || rest.includes('<![CDATA[')) {
+    const start = rest.indexOf('<![CDATA[');
+    if (start >= 0) {
+      rest = rest.slice(start + 9);
+      ev.inMsg = true;
+    }
+    const end = rest.indexOf(']]>');
+    if (end >= 0) {
+      ev.msg.push(rest.slice(0, end));
+      ev.inMsg = false;
+    } else if (ev.inMsg) ev.msg.push(rest);
+  } else if (!/<\/?log4j:/.test(line) && line.trim()) {
+    ev.extra.push(line); // e.g. stack trace lines inside <log4j:Throwable>
+  }
+  if (line.includes('</log4j:Event>')) {
+    const out = formatEvent(ev);
+    ev = null;
+    yield out;
+  }
+}
+
 export function missionLine(profileId: string, line: string, stream: string) {
   if (!current || current.profile.id !== profileId) return;
-  current.lines.push({ line, stream });
+  for (const out of normalise(line)) {
+    for (const part of out.split(String.fromCharCode(10))) {
+      current.lines.push({ line: part, stream });
+      sendToWindow('game:log', { profileId, line: part, stream });
+    }
+  }
   if (current.lines.length > MAX_LINES) current.lines.splice(0, 1000);
-  sendToWindow('game:log', { profileId, line, stream });
 }
 
 export function missionState(profileId: string, state: 'running' | 'exited', code?: number | null) {
