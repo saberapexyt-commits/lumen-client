@@ -15,6 +15,7 @@ import * as content from './mods/content';
 import * as modpack from './modpack';
 import * as options from './options';
 import * as skins from './skins';
+import * as mission from './mission';
 import { QUICK_OPTIONS } from './options';
 import { checkNow, getUpdateState, initUpdater, installNow } from './updater';
 
@@ -121,10 +122,17 @@ const handlers: Record<string, Handler> = {
       'Preparing to play',
       (t) =>
         game.play(id, t, {
-          onStarted: () => send('game:state', { profileId: id, state: 'running' }),
-          onLine: (line, stream) => send('game:log', { profileId: id, line, stream }),
+          onStarted: () => {
+            send('game:state', { profileId: id, state: 'running' });
+            mission.missionState(id, 'running');
+          },
+          onLine: (line, stream) => {
+            send('game:log', { profileId: id, line, stream });
+            mission.missionLine(id, line, stream);
+          },
           onExit: (code) => {
             send('game:state', { profileId: id, state: 'exited', code });
+            mission.missionState(id, 'exited', code);
             if (win && !win.isDestroyed() && !win.isVisible()) win.show();
           },
         }),
@@ -133,9 +141,29 @@ const handlers: Record<string, Handler> = {
       },
     );
     send('game:state', { profileId: id, state: 'starting' });
+    void (async () => {
+      if ((await getSettings()).missionControl) mission.startMission(await profiles.getProfile(id));
+    })();
     return taskId;
   },
   'game:kill': (id: string) => game.killGame(id),
+  'mission:info': async () => {
+    const info = mission.missionInfo();
+    if (!info) return null;
+    const modsCount = await mods.countMods(info.profile.id).catch(() => 0);
+    return { ...info, modsCount, running: game.isRunning(info.profile.id) };
+  },
+  'mission:lines': () => mission.missionLines(),
+  'mission:focusMain': () => {
+    if (win && !win.isDestroyed()) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+    }
+  },
+  'mission:screenshots': () => mission.missionScreenshots(),
+  'mission:openScreenshot': (name: string) => mission.openScreenshot(String(name)),
+  'mission:openGameLogs': () => mission.openGameLogs(),
   'task:cancel': (id: string) => tasks.get(id)?.cancel(),
   'options:get': (id: string) => ({ spec: QUICK_OPTIONS, values: options.readOptions(id) }),
   'options:set': (id: string, values: any) => {
@@ -301,9 +329,14 @@ function registerIpc() {
       }
     });
   }
-  ipcMain.on('window:minimize', () => win?.minimize());
-  ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()));
-  ipcMain.on('window:close', () => win?.close());
+  // the main window and the Mission Control window share these controls: act on whichever window asked
+  const asker = (e: Electron.IpcMainEvent) => BrowserWindow.fromWebContents(e.sender);
+  ipcMain.on('window:minimize', (e) => asker(e)?.minimize());
+  ipcMain.on('window:maximize', (e) => {
+    const w = asker(e);
+    if (w) w.isMaximized() ? w.unmaximize() : w.maximize();
+  });
+  ipcMain.on('window:close', (e) => asker(e)?.close());
 }
 
 function createWindow() {
@@ -332,6 +365,7 @@ function createWindow() {
   });
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   if (process.env.LUMEN_SHOT_DIR) void screenshotTour(process.env.LUMEN_SHOT_DIR);
+  win.on('closed', () => mission.closeMission());
   win.on('maximize', () => send('window:state', { maximized: true }));
   win.on('unmaximize', () => send('window:state', { maximized: false }));
 }

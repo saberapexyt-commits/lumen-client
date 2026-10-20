@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'" />
+  <title>Mission Control</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="mission.css" />
+</head>
+<body class="mission">
+  <div id="mc-title">
+    <div id="mc-crumb"></div>
+    <div class="tb-controls">
+      <button id="win-min" title="Minimize"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M1.5 6h9" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button id="win-max" title="Maximize"><svg width="11" height="11" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button id="win-close" class="close" title="Close"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.2"/></svg></button>
+    </div>
+  </div>
+  <div id="mc-body">
+    <nav id="mc-rail"></nav>
+    <main id="mc-main"></main>
+    <aside id="mc-side"></aside>
+  </div>
+  <div id="toasts"></div>
+  <div id="modal-root"></div>
+  <script type="module" src="js/mission.js"></script>
+</body>
+</html>

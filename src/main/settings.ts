@@ -8,6 +8,8 @@ export interface Settings {
   language: string;
   defaultRamMb: number;
   closeOnLaunch: boolean;
+  /** Open the Mission Control window (live console, mods, screenshots) when a game starts. */
+  missionControl: boolean;
   /** Install the Lumen menu resource pack into every profile. */
   lumenTheme: boolean;
   /** Install the Lumen in-game mod (custom main menu, settings screen) into supported profiles. */
@@ -31,6 +33,7 @@ const DEFAULTS: Settings = {
   language: 'en',
   defaultRamMb: Math.min(4096, Math.max(2048, Math.floor((os.totalmem() / 1024 / 1024) / 4 / 512) * 512)),
   closeOnLaunch: false,
+  missionControl: true,
   lumenTheme: true,
   lumenMod: true,
   showSnapshots: false,
