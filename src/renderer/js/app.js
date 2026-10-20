@@ -19,6 +19,7 @@ const PAGES = [...GROUPS.flatMap((g) => g.pages), SETTINGS];
 let page = localStorage.getItem('page') || 'home';
 if (!PAGES.some((p) => p.id === page)) page = 'home';
 let cleanup = null;
+let booted = false;
 const view = document.getElementById('view');
 
 export function navigate(id, params) {
@@ -29,6 +30,7 @@ export function navigate(id, params) {
   document.body.classList.toggle('home', page === 'home');
   view.replaceChildren();
   view.scrollTop = 0;
+  if (booted) refreshProfiles(); // profiles can change outside the UI (imports, copies): never show a stale list
   const result = PAGES.find((x) => x.id === page).render(view, params || {});
   Promise.resolve(result).then((c) => typeof c === 'function' && (cleanup = c));
   renderSidebar();
@@ -185,6 +187,8 @@ document.getElementById('win-close').onclick = () => window.lumen.window.close()
   status.textContent = 'LOADING PROFILES';
   await refreshProfiles();
   navigate(page);
+  booted = true;
+  window.addEventListener('focus', () => refreshProfiles());
   const wait = Math.max(0, 1300 - (Date.now() - started));
   setTimeout(() => {
     const sp = document.getElementById('splash');
