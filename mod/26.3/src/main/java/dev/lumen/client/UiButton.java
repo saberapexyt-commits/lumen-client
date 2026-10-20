@@ -17,10 +17,17 @@ public final class UiButton extends AbstractWidget {
     }
 
     private final Press press;
+    private boolean accent;
 
     private UiButton(int x, int y, int w, int h, Component msg, Press press) {
         super(x, y, w, h, msg);
         this.press = press;
+    }
+
+    /** Highlighted (primary) style, filled with the Lumen blue. */
+    public UiButton accent() {
+        this.accent = true;
+        return this;
     }
 
     public static UiButton of(Component msg, Press press, int x, int y, int w, int h) {
@@ -42,9 +49,11 @@ public final class UiButton extends AbstractWidget {
     protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         boolean hot = this.isHoveredOrFocused() && this.active;
         int x = getX(), y = getY(), w = getWidth(), h = getHeight();
-        g.fill(x, y, x + w, y + h, hot ? 0xFF3DB8FF : (this.active ? 0xFF343E4E : 0xFF242A36));
-        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, hot ? 0xF2182C42 : (this.active ? 0xE010151E : 0x8C0E1117));
-        g.fill(x + 1, y + h - 3, x + w - 1, y + h - 1, 0xB3060910);
+        int border = hot ? 0xFF3DB8FF : (accent ? 0xFF2B8FD0 : (this.active ? 0xFF343E4E : 0xFF242A36));
+        int inner = accent ? (hot ? 0xF22F9BE0 : 0xE61F78B8) : (hot ? 0xF2182C42 : (this.active ? 0xD010151E : 0x8C0E1117));
+        g.fill(x, y, x + w, y + h, border);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, inner);
+        g.fill(x + 1, y + h - 3, x + w - 1, y + h - 1, accent ? 0x55062030 : 0xB3060910);
         Minecraft mc = Minecraft.getInstance();
         g.centeredText(mc.font, getMessage(), x + w / 2, y + (h - mc.font.lineHeight) / 2, this.active ? 0xFFFFFFFF : 0xFF7C8494);
     }

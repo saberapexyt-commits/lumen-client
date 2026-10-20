@@ -3,12 +3,12 @@ package dev.lumen.client;
 import com.mojang.realmsclient.RealmsMainScreen;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
@@ -17,15 +17,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
- * The Lumen main menu: logo and buttons in a left column, saved servers on the right, panorama behind.
- * The layout adapts to the GUI scale, so it also fits small windows / large GUI scales.
+ * The Lumen main menu, in the style of the big clients: logo and a column of buttons in the middle over a dimmed
+ * background, your saved servers as a slim icon strip on the left, Quit at the bottom. The layout adapts to the GUI
+ * scale, so it also fits small windows / large GUI scales.
  */
 public class LumenTitleScreen extends Screen {
     private static final int LOGO_W = 2000, LOGO_H = 840; // texture size of lumen:textures/gui/logo.png
     private static final Identifier BG = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/background.png");
     private static final int BG_W = 1600, BG_H = 900;
     private static final int ACCENT = 0xFF3DB8FF;
-    private static final int PAD = 12;
 
     /** Pre-shrunk logo sizes (px wide). The one closest to the on-screen size is used so edges stay clean. */
     private static final int[] LOGO_SIZES = logoLadder();
@@ -49,7 +49,8 @@ public class LumenTitleScreen extends Screen {
         logoTexture = Identifier.fromNamespaceAndPath(LumenClient.MOD_ID, "textures/gui/logo_" + w + ".png");
     }
 
-    private int panelW, logoX, logoY, logoW, logoH;
+    private int logoX, logoY, logoW, logoH;
+    private int stripX, stripY, stripW, stripH;
     private ServerList servers;
 
     public LumenTitleScreen() {
@@ -58,42 +59,56 @@ public class LumenTitleScreen extends Screen {
 
     @Override
     protected void init() {
-        panelW = Math.max(150, Math.min(250, (int) (this.width * 0.36)));
-        int bw = panelW - PAD * 2;
-        int bh = 20, gap = 4;
-        int half = (bw - gap) / 2;
+        int bh = 22, gap = 5;
+        int bw = Math.max(130, Math.min(200, (int) (this.width * 0.34)));
+        int cx = this.width / 2;
         int rows = 4;
         int blockH = rows * bh + (rows - 1) * gap;
-        int y0 = this.height - 22 - blockH; // button block is anchored to the bottom
+        int quitH = 18;
 
-        // logo gets whatever height is left, never wider than the panel
-        int maxH = Math.max(30, y0 - PAD * 2);
-        logoW = Math.min(bw, (int) (maxH * (LOGO_W / (double) LOGO_H)));
+        // logo gets whatever height is left above the button block
+        int top = 10, bottom = this.height - 38;
+        int maxLogoH = Math.max(24, bottom - top - blockH - 14);
+        logoW = Math.min((int) (bw * 1.45), (int) (maxLogoH * (LOGO_W / (double) LOGO_H)));
         logoH = (int) (logoW * (LOGO_H / (double) LOGO_W));
-        logoX = (panelW - logoW) / 2;
-        logoY = Math.max(PAD, (y0 - logoH) / 2);
+        int total = logoH + 12 + blockH;
+        int y0 = top + Math.max(0, (bottom - top - total) / 2);
+        logoX = cx - logoW / 2;
+        logoY = y0;
         pickLogo();
 
-        int y = y0;
-        addRenderableWidget(UiButton.of(Component.translatable("menu.singleplayer"), b -> minecraft.setScreenAndShow(new SelectWorldScreen(this)), PAD, y, bw, bh));
+        int x = cx - bw / 2;
+        int y = y0 + logoH + 12;
+        int half = (bw - gap) / 2;
+        addRenderableWidget(UiButton.of(Component.translatable("menu.singleplayer"), b -> minecraft.setScreenAndShow(new SelectWorldScreen(this)), x, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(UiButton.of(Component.translatable("menu.multiplayer"), b -> minecraft.setScreenAndShow(new JoinMultiplayerScreen(this)), PAD, y, bw, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.multiplayer"), b -> minecraft.setScreenAndShow(new JoinMultiplayerScreen(this)), x, y, bw, bh));
         y += bh + gap;
-        addRenderableWidget(UiButton.of(Component.literal("Realms"), b -> minecraft.setScreenAndShow(new RealmsMainScreen(this)), PAD, y, half, bh));
-        addRenderableWidget(UiButton.of(Component.translatable("menu.options"), b -> minecraft.setScreenAndShow(new OptionsScreen(this, minecraft.options)), PAD + half + gap, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.literal("Realms"), b -> minecraft.setScreenAndShow(new RealmsMainScreen(this)), x, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.translatable("menu.options"), b -> minecraft.setScreenAndShow(new OptionsScreen(this, minecraft.options)), x + half + gap, y, half, bh));
         y += bh + gap;
-        addRenderableWidget(UiButton.of(Component.literal("Lumen"), b -> minecraft.setScreenAndShow(new LumenSettingsScreen(this)), PAD, y, half, bh));
-        addRenderableWidget(UiButton.of(Component.translatable("menu.quit"), b -> minecraft.stop(), PAD + half + gap, y, half, bh));
+        addRenderableWidget(UiButton.of(Component.literal("Lumen"), b -> minecraft.setScreenAndShow(new LumenSettingsScreen(this)), x, y, bw, bh).accent());
+        int qw = 96;
+        addRenderableWidget(UiButton.of(Component.translatable("menu.quit"), b -> minecraft.stop(), cx - qw / 2, this.height - 34, qw, quitH));
 
+        // saved servers: a slim vertical icon strip on the left
         servers = new ServerList(minecraft);
         servers.load();
-        if (LumenConfig.get().quickJoin) {
-            int rx = panelW + 24;
-            int rw = Math.min(190, this.width - rx - PAD);
-            int shown = Math.min(Math.max(0, (this.height - 52 - PAD) / (bh + gap)), Math.min(6, servers.size()));
-            for (int i = 0; i < shown && rw > 80; i++) {
+        stripW = 0;
+        stripH = 0;
+        if (LumenConfig.get().quickJoin && servers.size() > 0) {
+            int icon = 24, ig = 4, pad = 5;
+            int shown = Math.min(servers.size(), Math.min(7, Math.max(1, (this.height - 40) / (icon + ig))));
+            stripW = icon + pad * 2;
+            stripH = shown * icon + (shown - 1) * ig + pad * 2;
+            stripX = 8;
+            stripY = (this.height - stripH) / 2;
+            for (int i = 0; i < shown; i++) {
                 ServerData data = servers.get(i);
-                addRenderableWidget(UiButton.of(Component.literal(data.name), b -> join(data), rx, 40 + i * (bh + gap), rw, bh));
+                String letter = data.name.isEmpty() ? "?" : data.name.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+                UiButton b = UiButton.of(Component.literal(letter), btn -> join(data), stripX + pad, stripY + pad + i * (icon + ig), icon, icon);
+                b.setTooltip(Tooltip.create(Component.literal(data.name)));
+                addRenderableWidget(b);
             }
         }
     }
@@ -104,21 +119,23 @@ public class LumenTitleScreen extends Screen {
 
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        // Everything that must sit *under* the buttons is drawn here.
-        // Static artwork drawn from the mod's own namespace (a resource pack cannot replace it), with a slow drift.
+        // Screen.render() calls this first, so everything that must sit *under* the buttons is drawn here.
         int theme = LumenConfig.get().menuTheme;
-        if (theme != 0) {
-            MenuThemes.draw((x1, y1, x2, y2, c) -> g.fill(x1, y1, x2, y2, c), this.width, this.height, System.currentTimeMillis(), theme);
-        } else {
+        if (theme != 0) MenuThemes.draw((x1, y1, x2, y2, c) -> g.fill(x1, y1, x2, y2, c), this.width, this.height, System.currentTimeMillis(), theme);
+        else {
+            // Static artwork drawn from the mod's own namespace (a resource pack cannot replace it), with a slow drift.
             double scale = Math.max(this.width / (double) BG_W, this.height / (double) BG_H) * 1.1;
             int dw = (int) (BG_W * scale), dh = (int) (BG_H * scale);
             double drift = 0.5 + 0.5 * Math.sin(System.nanoTime() / 1.0e10);
             int bx = -(int) ((dw - this.width) * drift), by = -(dh - this.height) / 2;
             g.blit(RenderPipelines.GUI_TEXTURED, BG, bx, by, 0.0F, 0.0F, dw, dh, BG_W, BG_H, BG_W, BG_H);
         }
-        g.fill(0, 0, this.width, this.height, 0x40050709); // light overall dim so text stays readable
-        g.fill(0, 0, panelW, this.height, 0xB30A0C10);
-        g.fill(panelW, 0, panelW + 1, this.height, 0x663DB8FF);
+        g.fill(0, 0, this.width, this.height, 0x99070A10); // dim so the centre column stands out
+        g.fillGradient(0, this.height - this.height / 3, this.width, this.height, 0x00000000, 0x66000000);
+        if (stripW > 0) {
+            g.fill(stripX, stripY, stripX + stripW, stripY + stripH, 0xB30A0D12);
+            g.fill(stripX, stripY, stripX + 1, stripY + stripH, 0x333DB8FF);
+        }
         g.blit(RenderPipelines.GUI_TEXTURED, logoTexture, logoX, logoY, 0.0F, 0.0F, logoW, logoH, logoTexW, logoTexH, logoTexW, logoTexH);
     }
 
@@ -127,18 +144,12 @@ public class LumenTitleScreen extends Screen {
         super.extractRenderState(g, mouseX, mouseY, partialTick); // background, then widgets
 
         String version = "Minecraft " + SharedConstants.getCurrentVersion().name() + "  |  Lumen Client " + LumenClient.VERSION;
-        g.text(this.font, version, PAD, this.height - 14, 0xFF8D93A8, false);
-
-        if (LumenConfig.get().quickJoin) {
-            int rx = panelW + 24;
-            g.text(this.font, "QUICK JOIN", rx, 26, ACCENT, false);
-            if (servers != null && servers.size() == 0) {
-                int w = Math.max(80, this.width - rx - PAD);
-                g.textWithWordWrap(this.font, Component.literal("No saved servers yet. Add one in Multiplayer and it shows up here."), rx, 42, w, 0xFFB8BFCC);
-            }
-        }
+        g.text(this.font, version, (this.width - this.font.width(version)) / 2, this.height - 12, 0xFF6F7788, false);
         String who = minecraft.getUser().getName();
-        g.text(this.font, who, this.width - this.font.width(who) - PAD, 10, 0xFFB8BFCC, false);
+        int chipW = this.font.width(who) + 14;
+        g.fill(this.width - chipW - 8, 8, this.width - 8, 8 + 16, 0xB30A0D12);
+        g.fill(this.width - chipW - 8, 8 + 15, this.width - 8, 8 + 16, ACCENT);
+        g.text(this.font, who, this.width - chipW - 1, 8 + 4, 0xFFE6EAF2, false);
     }
 
     @Override
