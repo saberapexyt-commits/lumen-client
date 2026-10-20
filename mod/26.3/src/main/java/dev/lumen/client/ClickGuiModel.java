@@ -1,6 +1,7 @@
 package dev.lumen.client;
 
 import dev.lumen.client.module.BehaviourModules;
+import dev.lumen.client.module.GameplayModules;
 import dev.lumen.client.module.LumenModule;
 import dev.lumen.client.module.ModuleManager;
 import dev.lumen.client.module.ModuleState;
@@ -35,7 +36,7 @@ public final class ClickGuiModel {
 
     private static final int PW = 104, HEAD = 17, ROW = 14, OPT = 12, GAP = 8;
     private static final int ACCENT = 0xFF3DB8FF;
-    private static final String[] ORDER = {"HUD", "Info", "Visual", "Movement", "Menu"};
+    private static final String[] ORDER = {"HUD", "Info", "Visual", "Movement", "Gameplay", "Menu"};
 
     private static final class Opt {
         final Supplier<String> label;
@@ -124,6 +125,10 @@ public final class ClickGuiModel {
             r.opts.add(new Opt(() -> "Gap: " + s.gap, b -> s.gap = Math.max(0, Math.min(10, s.gap + (b == 0 ? 1 : -1)))));
             r.opts.add(new Opt(() -> "Thickness: " + s.thickness, b -> s.thickness = Math.max(1, Math.min(4, s.thickness + (b == 0 ? 1 : -1)))));
             r.opts.add(new Opt(() -> "Outline: " + (s.outline ? "ON" : "OFF"), b -> s.outline = !s.outline));
+        }
+        if (m instanceof GameplayModules.AutoFish fish) {
+            r.opts.add(new Opt(() -> "Recast delay: " + String.format(Locale.ROOT, "%.1f", fish.recastTicks() / 20.0) + "s",
+                b -> fish.state().size = Math.max(1, Math.min(15, fish.state().size + (b == 0 ? 1 : -1)))));
         }
         if (m instanceof VisualModules.LowFire) {
             r.opts.add(new Opt(() -> "Height: " + (Math.floorMod(m.state().style, 3) + 1) + "/3", b -> m.state().style = Math.floorMod(m.state().style + (b == 0 ? 1 : -1), 3)));

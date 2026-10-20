@@ -32,7 +32,8 @@ public final class ModuleManager {
         CROSSHAIR,
         HOTBAR,
         LOW_FIRE,
-        HIT_COLOR
+        HIT_COLOR,
+        new GameplayModules.AutoFish()
     );
 
     private ModuleManager() {}
