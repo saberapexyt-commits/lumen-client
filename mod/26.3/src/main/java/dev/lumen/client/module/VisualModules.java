@@ -14,7 +14,7 @@ public final class VisualModules {
 
         public Crosshair() {
             super("crosshair", "Crosshair", "Pick a crosshair style, colour, size and gap.", false, 0, 0);
-            state().color = 1; // blue by default
+            firstRun(s -> s.color = 1); // blue by default
         }
 
         @Override
@@ -85,7 +85,7 @@ public final class VisualModules {
 
         public HitColor() {
             super("hitcolor", "Hit Colour", "Change the colour of the flash when something is hit.", false, 0, 0);
-            state().color = 1;
+            firstRun(s -> s.color = 1);
         }
 
         @Override
@@ -115,7 +115,7 @@ public final class VisualModules {
     public static final class Hotbar extends LumenModule {
         public Hotbar() {
             super("hotbar", "Minimal Hotbar", "A clean, flat hotbar with a coloured selection box.", false, 0, 0);
-            state().color = 1;
+            firstRun(s -> s.color = 1);
         }
 
         @Override

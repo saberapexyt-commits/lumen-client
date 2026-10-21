@@ -21,6 +21,11 @@ public abstract class LumenModule {
         this.defaults = new ModuleState(defaultEnabled, x, y);
     }
 
+    /** Runs `init` only when the module has no saved settings yet, so defaults never overwrite what the player chose. */
+    protected void firstRun(java.util.function.Consumer<ModuleState> init) {
+        if (!LumenConfig.get().modules.containsKey(id)) init.accept(state());
+    }
+
     public ModuleState state() {
         return LumenConfig.get().modules.computeIfAbsent(id, k -> new ModuleState(defaults.enabled, defaults.x, defaults.y));
     }

@@ -16,7 +16,8 @@ public final class GameplayModules {
      * servers do not allow automated fishing and can ban for it: check the server's rules first.
      */
     public static final class AutoFish extends LumenModule {
-        private int cooldown = -1; // ticks until the next cast, -1 = nothing pending
+        private int recastIn = -1; // ticks until we cast again after reeling in, -1 = not waiting
+        private int waited; // ticks spent waiting for the old line to disappear
         private int castAge;
         private int idle; // ticks with a rod in hand but no line out, after fishing was started
         private boolean armed; // set once you have cast yourself
@@ -24,6 +25,7 @@ public final class GameplayModules {
 
         public AutoFish() {
             super("autofish", "Auto Fish", "Reels in on a bite and recasts so you can go AFK. Singleplayer unless 'On servers' is on.", false, 0, 0);
+            firstRun(s -> s.size = 2); // 0.4 s between reeling in and casting again
         }
 
         @Override
@@ -37,10 +39,16 @@ public final class GameplayModules {
         }
 
         private void reset() {
-            cooldown = -1;
+            recastIn = -1;
+            waited = 0;
             castAge = 0;
             idle = 0;
             armed = false;
+        }
+
+        private void cast(Minecraft mc, InteractionHand hand) {
+            mc.gameMode.useItem(mc.player, hand);
+            // the swing animation takes extra arguments on 26.x, so Auto Fish skips it there
         }
 
         @Override
@@ -65,29 +73,37 @@ public final class GameplayModules {
                 return;
             }
             FishingHook hook = mc.player.fishing;
+
+            if (recastIn >= 0) { // we just reeled in: count down, then cast as soon as the old line is gone
+                if (recastIn > 0) recastIn--;
+                if (recastIn == 0 && hook == null) {
+                    cast(mc, hand);
+                    recastIn = -1;
+                    waited = 0;
+                    idle = 0;
+                } else if (++waited > 80) { // the old line never went away: fall back to the normal checks
+                    recastIn = -1;
+                    waited = 0;
+                }
+                return;
+            }
+
             if (hook != null) {
                 armed = true;
-                cooldown = -1;
                 idle = 0;
                 castAge++;
                 // A bite pulls the bobber sharply down (the game sets its vertical speed to about -0.25 to -0.4).
                 if (castAge > 20 && hook.getHookedIn() == null && hook.getDeltaMovement().y < -0.15) {
-                    mc.gameMode.useItem(mc.player, hand);
-                    // the swing animation takes extra arguments on 26.x, so Auto Fish skips it there
-                    cooldown = recastTicks();
+                    cast(mc, hand); // reel in
+                    recastIn = recastTicks();
+                    waited = 0;
                     castAge = 0;
                 }
             } else {
                 castAge = 0;
-                if (cooldown > 0) cooldown--;
-                if (cooldown == 0) {
-                    mc.gameMode.useItem(mc.player, hand);
-                    // the swing animation takes extra arguments on 26.x, so Auto Fish skips it there
-                    cooldown = -1;
-                } else if (armed && cooldown < 0 && ++idle > 100) {
-                    // the line was lost (hooked something, lag, a failed cast): throw it again after five seconds
-                    mc.gameMode.useItem(mc.player, hand);
-                    // the swing animation takes extra arguments on 26.x, so Auto Fish skips it there
+                if (armed && ++idle > 40) {
+                    // the line was lost (hooked something, lag, a failed cast): throw it again after two seconds
+                    cast(mc, hand);
                     idle = 0;
                 }
             }
