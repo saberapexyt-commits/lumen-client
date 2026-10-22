@@ -1,6 +1,8 @@
 package dev.lumen.client.mixin;
 
+import dev.lumen.client.module.GameplayModules;
 import dev.lumen.client.module.ModuleManager;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -35,5 +37,21 @@ public class HudMixin {
             }
         }
         g.blit(tex, x, y, u, v, w, h);
+    }
+
+    /** Lets Solar Skies Auto Fish see the server's Fish Bite title / subtitle / action bar text. */
+    @Inject(method = "setTitle", at = @At("HEAD"))
+    private void lumen$title(Component text, CallbackInfo ci) {
+        GameplayModules.SolarFish.onServerText(text);
+    }
+
+    @Inject(method = "setSubtitle", at = @At("HEAD"))
+    private void lumen$subtitle(Component text, CallbackInfo ci) {
+        GameplayModules.SolarFish.onServerText(text);
+    }
+
+    @Inject(method = "setOverlayMessage", at = @At("HEAD"))
+    private void lumen$overlay(Component text, boolean animate, CallbackInfo ci) {
+        GameplayModules.SolarFish.onServerText(text);
     }
 }

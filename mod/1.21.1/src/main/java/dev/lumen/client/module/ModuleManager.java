@@ -33,7 +33,8 @@ public final class ModuleManager {
         HOTBAR,
         LOW_FIRE,
         HIT_COLOR,
-        new GameplayModules.AutoFish()
+        new GameplayModules.AutoFish(),
+        new GameplayModules.SolarFish()
     );
 
     private ModuleManager() {}

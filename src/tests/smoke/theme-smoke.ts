@@ -30,7 +30,7 @@ async function main() {
     fs.writeFileSync(path.join(gameDir, 'servers.dat'), Buffer.concat([Buffer.from([10]), str(''), Buffer.from([9]), str('servers'), Buffer.from([10]), count, ...list, Buffer.from([0])]));
   }
   if (process.env.LUMEN_ALLMODS || process.env.LUMEN_MENUTHEME) {
-    const ids = ['fps', 'cps', 'coords', 'keystrokes', 'armor', 'ping', 'clock', 'memory', 'speed', 'day', 'food', 'rotation', 'togglesprint', 'zoom', 'fullbright', 'crosshair', 'hotbar', 'lowfire', 'hitcolor', 'autofish'];
+    const ids = ['fps', 'cps', 'coords', 'keystrokes', 'armor', 'ping', 'clock', 'memory', 'speed', 'day', 'food', 'rotation', 'togglesprint', 'zoom', 'fullbright', 'crosshair', 'hotbar', 'lowfire', 'hitcolor', 'autofish', 'autofish_solar'];
     const pos: Record<string, [number, number]> = { fps: [0.01, 0.02], cps: [0.01, 0.08], coords: [0.01, 0.14], ping: [0.01, 0.2], clock: [0.01, 0.26], memory: [0.3, 0.02], speed: [0.3, 0.08], day: [0.3, 0.14], food: [0.3, 0.2], rotation: [0.3, 0.26], keystrokes: [0.01, 0.6], armor: [0.9, 0.4] };
     const modules: Record<string, unknown> = {};
     for (const id of ids) modules[id] = { enabled: !!process.env.LUMEN_ALLMODS, x: pos[id]?.[0] ?? 0, y: pos[id]?.[1] ?? 0, scale: 1, color: ['crosshair', 'hotbar', 'hitcolor'].includes(id) ? 1 : 0, background: true, style: id === 'crosshair' ? Number(process.env.LUMEN_XSTYLE || 0) : 0, size: 6, gap: 2, thickness: 1, outline: true };

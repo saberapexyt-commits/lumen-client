@@ -31,6 +31,7 @@ RENAMES_263 = [
     ('mc.level.getDayTime()', 'mc.level.getOverworldClockTime()'),
     ("mc.player.displayClientMessage(Component.literal(", "mc.player.sendSystemMessage(Component.literal("),
     ('server rules."), false);', 'server rules."));'),
+    ('Auto Fish is on."), false);', 'Auto Fish is on."));'),
     ('mc.player.swing(hand);', '// the swing animation takes extra arguments on 26.x, so Auto Fish skips it there'),  # 26.x replaced day time with a clock manager
 ]
 
